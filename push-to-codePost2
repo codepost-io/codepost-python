@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+import os
+import json
+import sys
+import subprocess
+import time
+
+
+from argparse import ArgumentParser, FileType
+import codePost_upload_utils as cPutil
+
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
+
+GROUPLISTER_CMD = "groupLister2"
+
+
+class color:
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+
+
+_TERM_ERROR = (color.END + color.RED + "[" + color.BOLD +
+               "ERROR" +
+               color.END + color.RED + "]" + color.END)
+
+_TERM_WARN = (color.END + color.BLUE + "[" + color.BOLD +
+              "WARNING" +
+              color.END + color.BLUE + "]" + color.END)
+
+_TERM_OK = (color.END + color.GREEN + "[" + color.BOLD +
+            "OK" +
+            color.END + color.GREEN + "]" + color.END)
+
+_TERM_INFO = (color.END + "[" + color.BOLD +
+              "INFO" +
+              color.END + "]" + color.END)
+
+verbose = True
+
+
+def _print_err(msg, fatal=None):
+    print(_TERM_ERROR + " " + msg, file=sys.stderr)
+    # fatal contains an error number; if non-empty, exit
+    if fatal != None:
+        sys.exit(fatal)
+
+
+def _print_warn(msg):
+    print(_TERM_WARN + " " + msg, file=sys.stderr)
+
+
+def _print_info(msg):
+    if verbose:
+        print(_TERM_INFO + " " + msg, file=sys.stderr)
+
+
+def _print_ok(msg):
+    print(_TERM_OK + " " + msg)
+
+
+def getPartnerships(assignment_name=None):
+    if not "tigerfile_path" in config:
+        _print_err(
+            "Group detection: 'tigerfile_path' setting not defined in configuration file. ")
+        _print_err("No group detection.")
+        return {}
+
+    path = None
+    if assignment_name != None and not "assignment_name" in config:
+        path = config['tigerfile_path'].format(
+            assignment_name=assignment_name, **config)
+    else:
+        path = config['tigerfile_path'].format(**config)
+
+    _print_info("Group detection: Using path '{}'".format(path))
+
+    partnerships = callGroupLister(path)
+    return partnerships
+
+
+def callGroupLister(path):
+
+    start = time.time()
+
+    # Retrieve group partnership from the shell script resolving inodes
+    if not os.path.exists(path):
+        _print_warn(
+            "Group detection: The filepath provided does not seem valid.")
+
+    out = None
+    try:
+        p = subprocess.Popen(
+            "{} {}".format(GROUPLISTER_CMD, path),
+            shell=True,
+            executable='/bin/bash',
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            close_fds=True)
+
+        (out, err) = p.communicate()
+        if err != None and len(err) > 0:
+            _print_warn(
+                "Group detection: Calling process returned some error: '{}'".format(err))
+
+    except:
+        _print_err("Group detection: Calling process failed. No group detection.")
+
+    # Post-process output of that script
+    s = out.decode("ascii").strip()
+    lines = s.split()
+    partnerships = {}
+    for line in lines:
+        (groupId, studentsStr) = line.split(",")
+        students = studentsStr.split("-")
+        students.sort()
+        partnerships[groupId] = students
+
+    end = time.time()
+
+    # Providing status update
+    _print_info("Group detection: Detected {} partnerships from {}, in {} seconds".format(
+        len(partnerships), path, (end-start)))
+
+    return partnerships
+
+
+def listFiles(path, fullPaths=True):
+    if not fullPaths:
+        return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    else:
+        return [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+
+
+def uploadFolderBySubmissionId(path, without_tests=False):
+    submissionId = os.path.basename(path)
+    if not submissionId in partnerships:
+        _print_warn(
+            "Submission: Path {} cannot be resolved to a submission".format(path))
+        _print_warn(
+            "Submission: '{}' is not a detected submission id; skipping submission".format(submissionId))
+        return False
+
+    students = partnerships[submissionId]
+    _print_info("Submission: {} for students {}".format(
+        submissionId, students))
+
+    studentsStr = ",".join(
+        map(lambda n: "{}@princeton.edu".format(n), students))
+
+    files = listFiles(path, fullPaths=True)
+    testPath = None
+
+    if "tests_path" in config:
+        testPath = config["tests_path"].format(
+            submission=submissionId, path=path, **config)
+        testPath = testPath.replace("$pwd", path)
+        exists = os.path.exists(testPath)
+        if not exists and not without_tests:
+            _print_info("Submission: TESTS NOT FOUND {} (call with --without-tests to ignore); skipping submission".format(
+                testPath))
+            return False
+
+    if testPath == None and not without_tests:
+        _print_info(
+            "Submission: TESTS could not be resolved; skipping submission")
+        _print_info(
+            "Configure 'tests_path' in the YAML configuration and/or call with --without-tests to bypass")
+        return False
+
+    if testPath != None:
+        files.append(testPath)
+
+    cmd = ["upload-to-codePost",
+           "-api_key", config["api_key"],
+           "-course_name", config["course_name"],
+           "-course_period", config["course_period"],
+           "-assignment_name", params["a"],
+           "-students", studentsStr,
+           "-files"] + files
+
+    if params["extend"]:
+        cmd.append("--extend")
+
+    if params["overwrite"]:
+        cmd.append("--overwrite")
+
+    out = None
+    try:
+        _print_info("Calling: '{}'".format(" ".join(cmd)))
+        # p = subprocess.Popen(
+        #     " ".join(cmd),
+        #     executable='/bin/bash',
+        #     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        #     close_fds=True)
+
+        # (out, err) = p.communicate()
+        # if err != None and len(err) > 0:
+        #     _print_warn(
+        #         "Submission: Upload, calling process returned some error: '{}'".format(err.decode("ascii")))
+        # _print_info("Produced: {}".format(out.decode("ascii")))
+        (errcode, output) = subprocess.getstatusoutput(" ".join(cmd))
+        if errcode != 0:
+            _print_warn("Submission: Upload calling return {} as errcode, output: '{}'".format(
+                errcode, output))
+        if "[OK] Submission successfully uploaded." in output:
+            _print_info("Submission: Upload successful.")
+            return True
+        else:
+            outputFirstLine = output.split("\n")[0]
+            _print_warn("Submission: Status of {} inconclusive, output: '{}'".format(
+                submissionId, outputFirstLine))
+    except Exception as e:
+        _print_err("Submission: Upload failed with exception: {}", format(e))
+        return False
+    return False
+
+
+parser = ArgumentParser()
+
+parser.add_argument('-a',
+                    help='The name of the assignment to upload to (e.g. Loops)')
+parser.add_argument('-s',
+                    help='The list of folders, one folder per submission to upload.', nargs='+')
+parser.add_argument('--netid', action='store_true',
+                    help='Assume folder names have NetIDs instead of submission hashes.')
+parser.add_argument('--extend', action='store_true',
+                    help='If submission already exists, add new files to it and replace old files if the code has changed.')
+parser.add_argument('--overwrite', action='store_true',
+                    help='If submission already exists, overwrite it.')
+parser.add_argument('--verbose', action='store_true',
+                    help='Display informational messages.')
+parser.add_argument('--without-tests', action='store_true',
+                    help='Allow upload assignments that do not have compiled tests.')
+parser.add_argument('--use-cache', action='store_true',
+                    help='Allow for caching mechanism (i.e., for groups).')
+args, unknown = parser.parse_known_args()
+
+# Decide if we need to look for YAML config file. We only need to do this if an argument isn't
+# specified on the command line
+params = vars(args)
+
+if params["a"] == None:
+    _print_err(
+        "Command line parameters: Missing assignment name, specified with '-a', exiting.", fatal=2)
+
+if params["s"] == None:
+    _print_err(
+        "Command line parameters: Missing submissions, specified with '-s', exiting.", fatal=3)
+
+if params["verbose"] == None or params["verbose"] == False:
+    verbose = False
+
+outparams = params.__repr__()
+if len(outparams) > 500:
+    outparams = outparams[:500] + "..."
+_print_info("Command line parameters: {}".format(outparams))
+
+# Load YAML configuration file
+possible_locations = ["codepost-config.yaml", ".codepost-config.yaml",
+                      "~/codepost-config.yaml", "~/.codepost-config.yaml"]
+location = None
+for p in possible_locations:
+    path = os.path.abspath(os.path.expanduser(p))
+    if os.path.exists(path):
+        location = path
+        break
+
+if location == None:
+    _print_err(
+        "No codepost-config.yaml configuration file detected. Exiting.", fatal=8)
+else:
+    _print_info("Configuration path: {}".format(location))
+
+config = load(open(location), Loader=Loader)
+_print_info("Configuration content: {}".format(config))
+
+partnerships = {}
+pCacheFile = os.path.expanduser(
+    "~/.{a}.{course_name}.{course_period}".format(a=params["a"], **config))
+if params["use_cache"] and os.path.exists(pCacheFile):
+    partnerships = json.loads(open(pCacheFile).read())
+else:
+    partnerships = getPartnerships(params["a"])
+    try:
+        open(pCacheFile, "w").write(json.dumps(partnerships))
+    except:
+        pass
+
+successful = 0
+total = 0
+for s in params["s"]:
+    print("Processing", s)
+    total += 1
+    if uploadFolderBySubmissionId(s, without_tests=params['without_tests']):
+        successful += 1
+
+_print_info("Made {} uploads from {} submissions".format(successful, total))

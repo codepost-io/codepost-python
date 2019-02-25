@@ -347,11 +347,12 @@ def remove_students_from_submission(api_key, submission, students_to_remove):
     # Students to Remove should be a list of strings
     assert isinstance(students_to_remove, list)
 
-    for student in students_to_remove:
-        if student not in submission['students']:
-            msg = 'Student %s is not in the submission to be removed' % (
-                student)
-            raise RuntimeError(msg)
+    # NOTE: The check below was spurious, and so has been removed.
+    # for student in students_to_remove:
+    #     if student not in submission['students']:
+    #         msg = 'Student %s is not in the submission to be removed' % (
+    #             student)
+    #         raise RuntimeError(msg)
 
     newStudentList = list(filter(
         lambda student: student not in students_to_remove, submission['students']))

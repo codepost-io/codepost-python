@@ -384,6 +384,8 @@ parser.add_argument('--without-tests', action='store_true',
                     help='Allow upload assignments that do not have compiled tests.')
 parser.add_argument('--use-cache', action='store_true',
                     help='Allow for caching mechanism (i.e., for groups).')
+parser.add_argument('--skip-notdone', action='store_true',
+                    help='Skip submissions that are not done.')
 args, unknown = parser.parse_known_args()
 
 # Decide if we need to look for YAML config file. We only need to do this if an argument isn't
@@ -458,6 +460,15 @@ total = 0
 for s in params["s"]:
     print("Processing", s)
     total += 1
+    if os.path.exists(s) and os.path.exists(os.path.join(s, "NOTDONE")):
+        if params["skip_notdone"]:
+            _print_info(
+                "Submission: Skipping {} because detected not done".format(s))
+            continue
+        else:
+            _print_info(
+                "Submission: {} seems NOTDONE but uploading anyway".format(s))
+
     if params["netid"] or params["groupname"]:
         if uploadFolderByNetID(s, without_tests=params['without_tests']):
             successful += 1

@@ -80,8 +80,15 @@ def getPartnerships(assignment_name=None):
 
     path = None
     if assignment_name != None and not "assignment_name" in config:
+        escaped_assignment_name = assignment_name
+        if "tigerfile_path_space" in config:
+            escaped_assignment_name = escaped_assignment_name.replace(
+                " ", config['tigerfile_path_space']
+            )
+            _print_info("Group detection: Using space substitution '{}'".format(
+                escaped_assignment_name))
         path = config['tigerfile_path'].format(
-            assignment_name=assignment_name, **config)
+            assignment_name=escaped_assignment_name, **config)
     else:
         path = config['tigerfile_path'].format(**config)
 

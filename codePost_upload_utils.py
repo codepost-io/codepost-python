@@ -76,18 +76,21 @@ _TERM_INFO = (color.END + "[" + color.BOLD +
               "INFO" +
               color.END + "]" + color.END)
 
+_TERM_ERROR = (color.END + "[" + color.BOLD + color.RED +
+               "ERROR" +
+               color.END + "]" + color.END)
 
-try:
-    import click
-except ImportError:
-    print(_TERM_ERROR + " This tool requires the 'click' python package.", file=sys.stderr)
-    print("Try installing the package locally:", file=sys.stderr)
-    print("    pip install --user click", file=sys.stderr)
-    sys.exit(99)
+# try:
+#     import click
+# except ImportError:
+#     print(_TERM_ERROR + " This tool requires the 'click' python package.", file=sys.stderr)
+#     print("Try installing the package locally:", file=sys.stderr)
+#     print("    pip install --user click", file=sys.stderr)
+#    sys.exit(99)
 
 
 def _print_info(msg):
-    click.echo(message=_TERM_INFO + " " + msg, err=True)
+    print(message=_TERM_INFO + " " + msg, file=sys.stderr)
 
 ########################################################################################
 # Primary methods (which can be called directly in a client script)
@@ -285,6 +288,46 @@ def get_assignment_info(api_key, course_name, course_term, assignment_name):
             'name'], thisCourse['period']))
 
     return targetAssignment
+
+
+def set_submission_students(api_key, submission_id, students):
+    auth_headers = {"Authorization": "Token %s" % (api_key)}
+
+    try:
+        r = requests.patch(BASE_URL + '/submissions/%d/' %
+                           (submission_id), headers=auth_headers,
+                           body={'students': students})
+
+    except Exception as e:
+        _print_info(
+            "Updating submission {} failed with exception".format(submission_id))
+        return False
+
+    return r.status_code != 200
+
+
+def get_submissions(api_key, assignment_id):
+    """
+    Returns submissions for the assignment corresponding with the given assignment id.
+    If this assignment exists and the API key in use has access to it, return all
+    submissions for that assignment.
+    Otherwise, return None.
+
+    Note: The assignment id can be obtained from the (course name, course period,
+    assignment name) by using the method `get_assignment_info`.
+    """
+
+    auth_headers = {"Authorization": "Token %s" % (api_key)}
+
+    r = requests.get(BASE_URL + '/assignments/%d/submissions/' %
+                     (assignment_id), headers=auth_headers)
+    if r.status_code != 200:
+        msg = "An error occurred when requesting submission for this assignment. {}"
+        raise RuntimeError(msg.format(r.content))
+
+    tempSubmissions = r.json()
+
+    return tempSubmissions
 
 ########################################################################################
 # Helper methods

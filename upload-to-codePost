@@ -162,7 +162,7 @@ fileNames = params['files']
 parsedFiles = []
 for fileName in fileNames:
     try:
-        code = open(fileName, 'r').read()
+        code = open(fileName, 'r', encoding='utf-8').read()
         path, extension = os.path.splitext(fileName)
         name = os.path.basename(fileName)
 

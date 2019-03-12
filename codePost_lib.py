@@ -128,11 +128,17 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_MODE):
         # from their existing submissions
 
         for submission in existing_submissions:
-            remove_students_from_submission(
+            changed_submission = remove_students_from_submission(
                 api_key=api_key,
                 submission_info=submission,
                 students_to_remove=students
             )
+
+            if mode["deleteAffectedSubmissions"]:
+                delete_submission(
+                    api_key=api_key,
+                    submission_id=changed_submission["id"]
+                )
 
         return post_submission(
             api_key=api_key,
@@ -153,7 +159,33 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_MODE):
         students=students
     )
 
-    # FIXME: finish writing this
+    if mode["addFiles"]:
+
+        if mode["updateExistingFiles"]:
+
+            if mode["removeComments"] and mode["doUnclaim"]:
+                # Overwriting the submission
+                delete_submission(api_key=api_key, submission_id=submission_id)
+                return post_submission(api_key, assignment['id'], students, files)
+
+            else:
+                # Diffscan
+                return diffscan_submission(
+                    api_key=api_key,
+                    submission_info=submission,
+                    newest_files=files,
+                    mode=mode
+                )
+        else:
+            # Extend
+            return diffscan_submission(
+                api_key=api_key,
+                submission_info=submission,
+                newest_files=files,
+                mode=mode
+            )
+
+    return None
 
 
 def diffscan_submission(api_key, submission_info, newest_files, mode=DEFAULT_MODE):

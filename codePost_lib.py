@@ -96,6 +96,9 @@ def get_available_courses(api_key, course_name=None, course_period=None):
 
 
 def get_assignment_info_by_id(api_key, assignment_id):
+    """
+    Returns the assignment information dictionary, given the assignment's ID.
+    """
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 
     try:
@@ -121,6 +124,11 @@ def get_assignment_info_by_id(api_key, assignment_id):
 
 
 def get_assignment_info_by_name(api_key, course_name, course_period, assignment_name):
+    """
+    Returns the assignment information dictionary, given a (course name, course period,
+    assignment name) tuple. This contains, in particular, the ID of the assignment that
+    is considered.
+    """
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 
     # Retrieve all available courses
@@ -141,7 +149,8 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
         )
 
     elif len(courses) > 1:
-        raise RuntimeError("""
+        raise RuntimeError(
+            """
             get_assignment_info: Request the provided course name ({}) and
             period ({}) resulted in more than one result ({}).
             """.format(course_name, course_period, len(courses))
@@ -159,10 +168,10 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
     try:
         for aid in assignments:
 
-            info = get_assignment_info_by_id(
-                api_key=api_key, assignment_id=aid)
-            if info.get("name") == assignment_name:
-                selected_assignment = info
+            ret = get_assignment_info_by_id(api_key=api_key, assignment_id=aid)
+
+            if ret.get("name") == assignment_name:
+                selected_assignment = ret
                 break
 
     except Exception as exc:
@@ -230,3 +239,159 @@ def get_assignment_submissions(api_key, assignment_id, username=None):
             ))
 
     return result
+
+
+def delete_submission(api_key, submission_id):
+    """
+    Deletes the submission with the given submission ID; raises an exception
+    if the submission does not exist or cannot be deleted.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.get(
+            "{}/submissions/{:d}/".format(BASE_URL, submission_id),
+            headers=auth_headers
+        )
+
+        if r.status_code != 204:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            delete_submission: Unexpected exception while deleting the
+            submission with ID {:d}:
+               {}
+            """.format(submission_id, exc)
+        )
+
+
+def delete_file(api_key, file_id):
+    """
+    Deletes the file with the given file ID; raises an exception
+    if the file does not exist or cannot be deleted.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.get(
+            "{}/files/{:d}/".format(BASE_URL, file_id),
+            headers=auth_headers
+        )
+
+        if r.status_code != 204:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            delete_file: Unexpected exception while deleting the
+            file with ID {:d}:
+               {}
+            """.format(file_id, exc)
+        )
+
+
+def post_file(api_key, submission_id, filename, content, extension):
+    """
+    Uploads a file to a submission.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    # Build the file payload.
+    payload = {
+        "submission": submission_id,
+        "name": filename,
+        "code": content,
+        "extension": extension
+    }
+
+    try:
+        r = _requests.post(
+            "{}/files/".format(BASE_URL),
+            headers=auth_headers,
+            data=payload
+        )
+
+        if r.status_code != 201:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            post_file: Unexpected exception while uploading the file '{}'
+            to submission {:d}:
+               {}
+            """.format(filename, submission_id, exc)
+        )
+
+
+def post_submission(api_key, assignment_id, students, files):
+    """
+    Uploads a submission, give the assignment's ID, and a dictionary containing
+    the information on the files to upload.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    # Build the submission payload.
+    payload = {
+        "assignment": assignment_id,
+        "students": students
+    }
+
+    submission = None
+
+    # Create the submission
+    try:
+        r = _requests.post(
+            "{}/submissions/".format(BASE_URL),
+            headers=auth_headers,
+            data=payload
+        )
+
+        if r.status_code != 201:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        submission = r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            post_submission: Unexpected exception while creating a submission
+            for students {} for assignment {}:
+               {}
+            """.format(students, assignment_id, exc)
+        )
+
+    # Upload the individual files
+    try:
+        for file in files:
+            post_file(
+                api_key=api_key,
+                submission_id=submission.get("id"),
+                filename=file["name"],
+                content=file["code"],
+                extension=file["extension"]
+            )
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            post_submission: Unexpected exception while adding files to newly
+            created submission {}:
+               {}
+            """.format(submission.get("id"), exc)
+        )
+
+    return submission

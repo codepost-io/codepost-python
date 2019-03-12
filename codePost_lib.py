@@ -41,8 +41,10 @@ DEFAULT_MODE = {
     "updateIfExists": True,
     "updateIfClaimed": True,
     "resolveStudents": True,
+
     "addFiles": True,
     "updateExistingFiles": True,
+
     "removeComments": True,
     "doUnclaim": True,
     "deleteAffectedSubmissions": True
@@ -51,7 +53,173 @@ DEFAULT_MODE = {
 ###########################################################################################
 
 
+class UploadError(RuntimeError):
+    pass
+
+
+def upload_submission(api_key, assignment, students, files, mode=DEFAULT_MODE):
+
+    assignment_id = assignment.get("id", 0)
+
+    # Retrieve all existing submissions associated with the students
+
+    existing_submissions = {}
+
+    for student in students:
+        submissions = get_assignment_submissions(
+            api_key=api_key,
+            assignment_id=assignment_id,
+            username=student
+        )
+
+        for submission in submissions:
+            existing_submissions[submission["id"]] = submission
+
+    # Check to see if there is a collision
+
+    if len(existing_submissions) == 0:
+
+        # CASE 1: No existing submission => create a new submission
+
+        return post_submission(
+            api_key=api_key,
+            assignment_id=assignment_id,
+            students=students,
+            files=files
+        )
+
+    # There is at least one (maybe more) existing submissions
+
+    # First check the modes to determine whether to proceed.
+    if not mode["updateIfExists"]:
+        raise UploadError(
+            """
+            At least one submission already exists, and 'updateIfExists' is false,
+            so interrupting upload.
+            """)
+
+    # Check whether any of the existing submissions are claimed.
+    if not mode["updateIfClaimed"] and _submission_list_is_unclaimed(existing_submissions):
+        raise UploadError(
+            """
+            At least one submission has already been claimed by a grader, and
+            'updateIfClaimed' is false, so interrupting upload.
+            """)
+
+    # Check whether students will need an update.
+    if not mode["resolveStudents"]:
+        if set(students) != set(existing_submissions[0]["students"]) or len(existing_submissions) > 1:
+            raise UploadError(
+                """
+                There are {} existing submission(s) with a different subset of
+                students than those requested. Since 'resolveStudents' is false,
+                interrupting upload.
+                - Requested students: {}
+                - Existing students (on first existing submission): {}
+                """.format(
+                    len(existing_submissions),
+                    students,
+                    set(existing_submissions[0]["students"])
+                ))
+
+    if len(existing_submissions) > 1:
+
+        # CASE 2: Remove the students that we need to assign to the uploaded submission
+        # from their existing submissions
+
+        for submission in existing_submissions:
+            remove_students_from_submission(
+                api_key=api_key,
+                submission_info=submission,
+                students_to_remove=students
+            )
+
+        return post_submission(
+            api_key=api_key,
+            assignment_id=assignment_id,
+            students=students,
+            files=files
+        )
+
+    # CASE 3: There is exactly one submission.
+    submission = existing_submissions[0]
+    submission_id = submission["id"]
+
+    # Update the submission students to make sure it is what was specified (if we needed
+    # to make this change, and it was forbidden, this would already have been caught).
+    set_submission_students(
+        api_key=api_key,
+        submission_id=submission_id,
+        students=students
+    )
+
+    # FIXME: finish writing this
+
+
+def diffscan_submission(api_key, submission_info, newest_files, mode=DEFAULT_MODE):
+
+    # Retrieve a submission's existing files
+    existing_files = {
+        file["name"]: file
+        for file in [
+            get_file(api_key=api_key, file_id=file_id)
+            for file_id in submission_info['files']
+        ]
+    }
+
+    #
+    submission_was_modified = False
+
+    for file in newest_files:
+
+        # Check if file matches existing ones (by matching name and extension)
+        if file["name"] in existing_files and existing_files[file["name"]]["extension"] == file["extension"]:
+
+            if mode["updateExistingFiles"]:
+
+                # FIXME: use hashing/robust method of comparing files
+
+                # Ignore newlines when comparing files, to avoid a trailing newline
+                # registering as a difference
+
+                data_existing = existing_files[file["name"]]["code"].replace(
+                    "\n", "")
+                data_new = file["code"].replace("\n", "")
+
+                if data_existing != data_new:
+
+                    submission_was_modified = True
+                    _print_info(
+                        "Replacing contents of {} (note: all comments will be deleted)")
+
+                    delete_file(api_key=api_key,
+                                file_id=existing_files[file["name"]]["id"])
+                    post_file(
+                        api_key=api_key,
+                        submission_id=submission_info["id"],
+                        filename=file["name"],
+                        content=file["code"],
+                        extension=file["extension"]
+                    )
+
+        else:
+            submission_was_modified = True
+            _print_info("Adding file {}.".format(file["name"]))
+            post_file(
+                api_key=api_key,
+                submission_id=submission_info["id"],
+                filename=file["name"],
+                content=file["code"],
+                extension=file["extension"]
+            )
+
+    if not submission_was_modified:
+        _print_info("Nothing to add or update, submission was left unchanged.")
+
+    return submission_was_modified
+
 ###########################################################################################
+
 
 def get_available_courses(api_key, course_name=None, course_period=None):
     """
@@ -124,6 +292,35 @@ def get_assignment_info_by_id(api_key, assignment_id):
             assignment info from the provided id ({:d}):
                {}
             """.format(assignment_id, exc)
+        )
+
+
+def get_file(api_key, file_id):
+    """
+    Returns the file given its file ID; the file IDs are provided within a
+    submissions information.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.get(
+            "{}/files/{:d}/".format(BASE_URL, file_id),
+            headers=auth_headers
+        )
+
+        if r.status_code != 200:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            get_file: Unexpected exception while retrieving the file info
+            from the provided id ({:d}):
+               {}
+            """.format(file_id, exc)
         )
 
 

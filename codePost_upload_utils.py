@@ -90,7 +90,7 @@ _TERM_ERROR = (color.END + "[" + color.BOLD + color.RED +
 
 
 def _print_info(msg):
-    print(message=_TERM_INFO + " " + msg, file=sys.stderr)
+    print(_TERM_INFO + " " + msg, file=sys.stderr)
 
 ########################################################################################
 # Primary methods (which can be called directly in a client script)
@@ -296,14 +296,14 @@ def set_submission_students(api_key, submission_id, students):
     try:
         r = requests.patch(BASE_URL + '/submissions/%d/' %
                            (submission_id), headers=auth_headers,
-                           body={'students': students})
+                           data={'students': students})
 
     except Exception as e:
         _print_info(
-            "Updating submission {} failed with exception".format(submission_id))
+            "Updating submission {} failed with exception {}".format(submission_id, e))
         return False
 
-    return r.status_code != 200
+    return r.status_code == 200
 
 
 def get_submissions(api_key, assignment_id):

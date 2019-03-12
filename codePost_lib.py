@@ -48,6 +48,10 @@ DEFAULT_MODE = {
     "deleteAffectedSubmissions": True
 }
 
+###########################################################################################
+
+
+###########################################################################################
 
 def get_available_courses(api_key, course_name=None, course_period=None):
     """
@@ -395,3 +399,68 @@ def post_submission(api_key, assignment_id, students, files):
         )
 
     return submission
+
+
+def set_submission_students(api_key, submission_id, students):
+    """
+    Modifies the students associated with a submission.
+    """
+    # students should be a list of strings
+    assert isinstance(students_to_remove, students)
+
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.patch(
+            "{}/submissions/{:d}/".format(BASE_URL, submission_id),
+            headers=auth_headers,
+            data={"students": students}
+        )
+
+        if r.status_code != 200:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            set_submission_students: Unexpected exception while updating the
+            students ({}) associated with submission ID {:d}:
+               {}
+            """.format(students, submission_id, exc)
+        )
+
+
+def remove_students_from_submission(api_key, submission_info, students_to_remove):
+    """
+    Removes students from a submission, and possibly delete the submission if no
+    user is associated with it anymore.
+    """
+    # Students to remove should be a list of strings
+    assert isinstance(students_to_remove, list)
+
+    new_student_list = list(set(submission_info["students"]).difference(
+        set(students_to_remove)))
+
+    if len(new_student_list) == 0:
+        # Eliminate orphaned submissions
+        return delete_submission(
+            api_key=api_key,
+            submission_id=submission_info["id"]
+        )
+
+    # Update students of this submission
+    return set_submission_students(
+        api_key=api_key,
+        submission_id=submission_info["id"],
+        students=new_student_list
+    )
+
+
+def _submission_list_is_unclaimed(submissions):
+    for submission in submissions:
+        if submission['grader'] is not None:
+            return False
+    return True

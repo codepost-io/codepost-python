@@ -145,8 +145,9 @@ class UploadModes(_DocEnum):
     }, """
     With the 'Overwrite' mode: If a submission already exists for this (student, assignment) pair
     (including partners), overwrite it with the contents of the request. Keep the existing submission
-    linked to any partners not included in the request. Delete any existing comments, unclaim
-    the submission, and set grader field to `None`.
+    linked to any partners not included in the request. If at least one file is either added or
+    updated, then: Delete any existing comments and unclaim the submission (set the `grader` field
+    of the submission to `None`).
     """
 
     PREGRADE = {
@@ -232,7 +233,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                 students than those requested. Since 'resolveStudents' is false,
                 interrupting upload.
                 - Requested students: {}
-                - Existing students(on first existing submission): {}
+                - Existing students (on first existing submission): {}
                 """.format(
                     len(existing_submissions),
                     students,
@@ -639,7 +640,7 @@ def set_submission_grader(api_key, submission_id, grader):
 
 def unclaim_submission(api_key, submission_id):
     """
-    Unclaims a submission, given the submission ID. This unset the associated
+    Unclaims a submission, given the submission ID. This unsets the associated
     grader.
     """
     return set_submission_grader(

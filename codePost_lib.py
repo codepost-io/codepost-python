@@ -174,7 +174,6 @@ DEFAULT_UPLOAD_MODE = UploadModes.CAUTIOUS
 class UploadError(RuntimeError):
     pass
 
-
 def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_MODE):
 
     assignment_id = assignment.get("id", 0)
@@ -209,7 +208,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
     # There is at least one (maybe more) existing submissions
 
     # First check the modes to determine whether to proceed.
-    if not mode["updateIfExists"]:
+    if not mode.value["updateIfExists"]:
         raise UploadError(
             """
             At least one submission already exists, and 'updateIfExists' is false,
@@ -217,7 +216,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             """)
 
     # Check whether any of the existing submissions are claimed.
-    if not mode["updateIfClaimed"] and _submission_list_is_unclaimed(existing_submissions):
+    if not mode.value["updateIfClaimed"] and _submission_list_is_unclaimed(existing_submissions):
         raise UploadError(
             """
             At least one submission has already been claimed by a grader, and
@@ -225,7 +224,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             """)
 
     # Check whether students will need an update.
-    if not mode["resolveStudents"]:
+    if not mode.value["resolveStudents"]:
         if len(existing_submissions) > 1 or set(students) != set(existing_submissions[0]["students"]):
             raise UploadError(
                 """
@@ -252,7 +251,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                 students_to_remove=students
             )
 
-            if mode["deleteAffectedSubmissions"]:
+            if mode.value["deleteAffectedSubmissions"]:
                 delete_submission(
                     api_key=api_key,
                     submission_id=changed_submission["id"]
@@ -288,13 +287,13 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
     # Depending on the outcome of the file changes, proceed with the finishing actions
     if submission_was_modified:
 
-        if mode["removeComments"]:
+        if mode.value["removeComments"]:
             remove_comments(
                 api_key=api_key,
                 submission_id=submission_id
             )
 
-        if mode["doUnclaim"]:
+        if mode.value["doUnclaim"]:
             unclaim_submission(
                 api_key=api_key,
                 submission_id=submission_id
@@ -322,7 +321,7 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
         # Check if file matches existing ones (by matching name and extension)
         if file["name"] in existing_files and existing_files[file["name"]]["extension"] == file["extension"]:
 
-            if mode["updateExistingFiles"]:
+            if mode.value["updateExistingFiles"]:
 
                 # FIXME: use hashing/robust method of comparing files
 
@@ -351,7 +350,7 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
 
         else:
 
-            if mode["addFiles"]:
+            if mode.value["addFiles"]:
 
                 submission_was_modified = True
                 _print_info("Adding file {}.".format(file["name"]))

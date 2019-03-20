@@ -18,7 +18,7 @@ import os
 import sys
 from yaml import load, dump
 from argparse import ArgumentParser, FileType
-import codePost_upload_utils as cpUpload
+import codePost_lib as cpUpload
 
 
 class color:
@@ -182,21 +182,25 @@ for fileName in fileNames:
 
 
 # Set upload mode
-modeToUse = 0  # default to cautious mode
+modeToUse = cpUpload.UploadModes.CAUTIOUS
 if params['overwrite']:
-    modeToUse = 3
+    modeToUse = cpUpload.UploadModes.OVERWRITE
 elif params['extend']:
-    modeToUse = 2
+    modeToUse = cpUpload.UploadModes.DIFFSCAN
 
 # call upload_single_submission
 try:
-    cpUpload.upload_single_submission(api_key=params['api_key'],
-                                      course_name=params['course_name'],
-                                      course_period=params['course_period'],
-                                      assignment_name=params['assignment_name'],
-                                      students=studentList,
-                                      files=parsedFiles,
-                                      mode=modeToUse)
+    assignmentObj = cpUpload.get_assignment_info_by_name(params['api_key'],
+                                                         params['course_name'],
+                                                         params['course_period'],
+                                                         params['assignment_name'])
+
+    cpUpload.upload_submission(api_key=params['api_key'],
+                               assignment=assignmentObj,
+                               students=studentList,
+                               files=parsedFiles,
+                               mode=modeToUse)
+
     _print_ok("Submission successfully uploaded.")
 except RuntimeError as e:
     _print_err(str(e))

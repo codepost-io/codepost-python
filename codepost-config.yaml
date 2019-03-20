@@ -1,9 +1,3 @@
-course_name: COS999
-course_period: S2019
-api_key: 75015032bb226e6bb0f14aea0ff0d2a5d9a4b875 # Jeremie's API key
-tigerfile_path: /n/fs/tigerfile/Files/{course_name}_{course_period}/{assignment_name}
-tigerfile_path_space: "_"
-tests_path: "{pwd}/../.output/{submission}.output.txt"
-group_separator: "-"
-user_pattern: "{}@princeton.edu"
-partners_path: "{pwd}/partners.txt"
+course_name: <NAME HERE>
+course_period: <PERIOD HERE>
+api_key: <API KEY HERE> # https://codepost.io/settings

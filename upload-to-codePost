@@ -182,9 +182,7 @@ for fileName in fileNames:
 
 
 # Set upload mode
-modeToUse = {
-  modeToUse = cpUpload.UploadModes.CAUTIOUS
-}
+modeToUse = cpUpload.UploadModes.CAUTIOUS
 if params['overwrite']:
     modeToUse = cpUpload.UploadModes.OVERWRITE
 elif params['extend']:

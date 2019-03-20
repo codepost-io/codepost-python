@@ -174,7 +174,6 @@ DEFAULT_UPLOAD_MODE = UploadModes.CAUTIOUS
 class UploadError(RuntimeError):
     pass
 
-
 def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_MODE):
 
     assignment_id = assignment.get("id", 0)

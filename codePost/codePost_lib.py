@@ -169,8 +169,8 @@ class UploadModes(_DocEnum):
 DEFAULT_UPLOAD_MODE = UploadModes.CAUTIOUS
 
 ###########################################################################################
-
-
+# Core upload logic
+###########################################################################################
 class UploadError(RuntimeError):
     pass
 
@@ -369,6 +369,8 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
     return submission_was_modified
 
 ###########################################################################################
+# Helper functions
+###########################################################################################
 
 
 def get_available_courses(api_key, course_name=None, course_period=None):
@@ -443,36 +445,6 @@ def get_assignment_info_by_id(api_key, assignment_id):
                {}
             """.format(assignment_id, exc)
         )
-
-
-def get_file(api_key, file_id):
-    """
-    Returns the file given its file ID; the file IDs are provided within a
-    submissions information.
-    """
-    auth_headers = {"Authorization": "Token {}".format(api_key)}
-
-    try:
-        r = _requests.get(
-            "{}/files/{:d}/".format(BASE_URL, file_id),
-            headers=auth_headers
-        )
-
-        if r.status_code != 200:
-            raise RuntimeError("HTTP request returned {}: {}".format(
-                r.status_code, r.content))
-
-        return r.json()
-
-    except Exception as exc:
-        raise RuntimeError(
-            """
-            get_file: Unexpected exception while retrieving the file info
-            from the provided id({: d}):
-               {}
-            """.format(file_id, exc)
-        )
-
 
 def get_assignment_info_by_name(api_key, course_name, course_period, assignment_name):
     """
@@ -599,6 +571,34 @@ def get_assignment_submissions(api_key, assignment_id, student=None, grader=None
             ))
 
     return result
+
+def get_file(api_key, file_id):
+    """
+    Returns the file given its file ID; the file IDs are provided within a
+    submissions information.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.get(
+            "{}/files/{:d}/".format(BASE_URL, file_id),
+            headers=auth_headers
+        )
+
+        if r.status_code != 200:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            get_file: Unexpected exception while retrieving the file info
+            from the provided id({: d}):
+               {}
+            """.format(file_id, exc)
+        )
 
 
 def set_submission_grader(api_key, submission_id, grader):
@@ -868,6 +868,52 @@ def post_submission(api_key, assignment_id, students, files):
 
     return submission
 
+def post_comment(api_key, file, text, pointDelta, startChar, endChar, startLine, endLine, rubricComment=None):
+  """
+  Adds comment specified by (startChar, endChar, startLine, endLine) to file
+  """
+  auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+  # Build the comment payload
+  payload = {
+    "text" : text,
+    "pointDelta" : pointDelta,
+    "startChar" : startChar,
+    "endChar" : endChar,
+    "startLine" : startLine,
+    "endLine" : endLine,
+    "file" : file.get("id"), # from arg
+  }
+
+  if rubricComment is not None:
+    payload["rubricComment"] = rubricComment
+
+  comment = None
+
+  # Create the comment
+  try:
+      r = _requests.post(
+          "{}/comments/".format(BASE_URL),
+          headers=auth_headers,
+          data=payload
+      )
+
+      if r.status_code != 201:
+          raise RuntimeError("HTTP request returned {}: {}".format(
+              r.status_code, r.content))
+
+      comment = r.json()
+
+  except Exception as exc:
+      raise RuntimeError(
+          """
+          post_comment: Unexpected exception while creating a comment
+          for file with id {}:
+             {}
+          """.format(payload["file"], exc)
+      )
+
+  return comment
 
 def set_submission_students(api_key, submission_id, students):
     """
@@ -899,7 +945,6 @@ def set_submission_students(api_key, submission_id, students):
                {}
             """.format(students, submission_id, exc)
         )
-
 
 def remove_students_from_submission(api_key, submission_info, students_to_remove):
     """

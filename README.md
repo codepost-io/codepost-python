@@ -6,6 +6,13 @@ The codePost Python library provides a set of helper functions used to access th
 
 Check out the [Python API docs](http://docs.codepost.io/?python#introduction).
 
+## Documentation
+
+You don't to download this source code unless you want to modify the package. If you just want to use the package, you can run:
+```
+pip install --upgrade codePost
+```
+
 ## Usage
 To use the functions available in `codePost_lib.py`, you must have a codePost API key. To retrieve an API key, you must be a admin of a course on codePost. You can do so at [https://codepost.io/settings](https://codepost.io/settings).
 

@@ -6,7 +6,7 @@ The codePost Python library provides a set of helper functions used to access th
 
 Check out the [Python API docs](http://docs.codepost.io/?python#introduction).
 
-## Documentation
+## Installation
 
 You don't to download this source code unless you want to modify the package. If you just want to use the package, you can run:
 ```

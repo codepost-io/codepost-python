@@ -1,4 +1,13 @@
-
+# Build data
+/.eggs
+/build
+/dist
+/MANIFEST
+/codepost.egg-info
+.python-version
+*.pyc
+*.egg
+*.class
 
 # Python binaries
 *.pyc

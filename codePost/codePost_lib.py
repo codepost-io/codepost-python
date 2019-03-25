@@ -940,7 +940,7 @@ def set_submission_students(api_key, submission_id, students):
     Modifies the students associated with a submission.
     """
     # students should be a list of strings
-    assert isinstance(students_to_remove, students)
+    assert isinstance(students, list)
 
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 

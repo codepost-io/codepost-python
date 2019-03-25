@@ -624,10 +624,14 @@ def set_submission_grader(api_key, submission_id, grader):
     """
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 
-    if grader in [None, "", "None", "null"]:
-        grader = "null"
-
     payload = {"grader": grader}
+
+    if grader in [None, "", "None", "null"]:
+        payload["grader"] = "" # API requires an empty string to unassign, not null or None
+
+        # A finalized submission must have a grader, so if we are unclaiming, we must also
+        # unfinalize.
+        payload["isFinalized"] = False
 
     try:
         r = _requests.patch(

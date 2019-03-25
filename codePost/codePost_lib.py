@@ -270,7 +270,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
         )
 
     # CASE 3: There is exactly one submission.
-    submission = existing_submissions[0]
+    submission = list(existing_submissions.values())[0]
     submission_id = submission["id"]
 
     # Update the submission students to make sure it is what was specified (if we needed

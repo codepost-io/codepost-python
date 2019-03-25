@@ -779,7 +779,7 @@ def delete_file(api_key, file_id):
             raise RuntimeError("HTTP request returned {}: {}".format(
                 r.status_code, r.content))
 
-        return r.json()
+        return True # no body returned on successful delete
 
     except Exception as exc:
         raise RuntimeError(

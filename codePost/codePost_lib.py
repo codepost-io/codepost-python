@@ -82,6 +82,7 @@ class UploadModes(_DocEnum):
 
         "addFiles": False,
         "updateExistingFiles": False,
+        "deleteUnspecifiedFiles" : False,
 
         "removeComments": False,
         "doUnclaim": False,
@@ -99,6 +100,7 @@ class UploadModes(_DocEnum):
 
         "addFiles": True,
         "updateExistingFiles": False,
+        "deleteUnspecifiedFiles" : False,
 
         "removeComments": False,
         "doUnclaim": False,
@@ -117,6 +119,7 @@ class UploadModes(_DocEnum):
 
         "addFiles": True,
         "updateExistingFiles": True,
+        "deleteUnspecifiedFiles" : False,
 
         "removeComments": False,
         "doUnclaim": False,
@@ -138,6 +141,7 @@ class UploadModes(_DocEnum):
 
         "addFiles": True,
         "updateExistingFiles": True,
+        "deleteUnspecifiedFiles" : True,
 
         "removeComments": True,
         "doUnclaim": True,
@@ -157,6 +161,7 @@ class UploadModes(_DocEnum):
 
         "addFiles": True,
         "updateExistingFiles": True,
+        "deleteUnspecifiedFiles" : True,
 
         "removeComments": True,
         "doUnclaim": False,
@@ -216,7 +221,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             """)
 
     # Check whether any of the existing submissions are claimed.
-    if not mode.value["updateIfClaimed"] and _submission_list_is_unclaimed(existing_submissions):
+    if not mode.value["updateIfClaimed"] and _submission_list_is_unclaimed(list(existing_submissions.values())):
         raise UploadError(
             """
             At least one submission has already been claimed by a grader, and
@@ -265,7 +270,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
         )
 
     # CASE 3: There is exactly one submission.
-    submission = existing_submissions[0]
+    submission = list(existing_submissions.values())[0]
     submission_id = submission["id"]
 
     # Update the submission students to make sure it is what was specified (if we needed
@@ -362,6 +367,17 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                     content=file["code"],
                     extension=file["extension"]
                 )
+
+
+    # Delete files in existing_files but not in newest_files, if instructed to do so
+    if mode.value["deleteUnspecifiedFiles"]:
+      newest_files_names = [x["name"] for x in newest_files]
+      for file in existing_files:
+        if file not in newest_files_names:
+          _print_info("Deleting file {}, since it was not specified in the upload and deleteUnspecifiedFiles is True.".format(file))
+          delete_file(api_key=api_key,
+                      file_id=existing_files[file]["id"])
+          submission_was_modified = True
 
     if not submission_was_modified:
         _print_info("Nothing to add or update, submission was left unchanged.")
@@ -608,10 +624,14 @@ def set_submission_grader(api_key, submission_id, grader):
     """
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 
-    if grader in [None, "", "None", "null"]:
-        grader = "null"
-
     payload = {"grader": grader}
+
+    if grader in [None, "", "None", "null"]:
+        payload["grader"] = "" # API requires an empty string to unassign, not null or None
+
+        # A finalized submission must have a grader, so if we are unclaiming, we must also
+        # unfinalize.
+        payload["isFinalized"] = False
 
     try:
         r = _requests.patch(
@@ -759,7 +779,7 @@ def delete_file(api_key, file_id):
             raise RuntimeError("HTTP request returned {}: {}".format(
                 r.status_code, r.content))
 
-        return r.json()
+        return True # no body returned on successful delete
 
     except Exception as exc:
         raise RuntimeError(
@@ -920,7 +940,7 @@ def set_submission_students(api_key, submission_id, students):
     Modifies the students associated with a submission.
     """
     # students should be a list of strings
-    assert isinstance(students_to_remove, students)
+    assert isinstance(students, list)
 
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 

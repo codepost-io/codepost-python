@@ -221,7 +221,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             """)
 
     # Check whether any of the existing submissions are claimed.
-    if not mode.value["updateIfClaimed"] and _submission_list_is_unclaimed(existing_submissions):
+    if not mode.value["updateIfClaimed"] and _submission_list_is_unclaimed(list(existing_submissions.values())):
         raise UploadError(
             """
             At least one submission has already been claimed by a grader, and

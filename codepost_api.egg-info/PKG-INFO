@@ -1,0 +1,39 @@
+Metadata-Version: 2.1
+Name: codepost-api
+Version: 1.0.0
+Summary: Python bindings for the codePost API
+Home-page: https://github.com/codepost-io/codePost-api-python
+Author: codePost
+Author-email: team@codepost.io
+License: MIT
+Description: # codePost API - Python Library
+        
+        The codePost API provides a set of helper functions used to access the codePost API from applications written in the Python language.
+        
+        ## Documentation
+        
+        This library implements helper methods to access the codePost API. Check out the [Python version of the codePost API docs](http://docs.codepost.io/?python#introduction).
+        
+        ## Installation
+        
+        The recommended method to install this codePost API Python library, is to use pip:
+        
+        ```
+        pip install codepost_api
+        ```
+        
+        or for local development:
+        
+        ```
+        pip install --user codepost_api
+        ```
+        
+        ## Usage
+        
+        To use the functions available in this library, you must have a codePost API key. As of March 2019, to retrieve a codePost API key, you must be a administrator of a course on codePost. It will then be accessible from [https://codepost.io/settings](https://codepost.io/settings).
+        
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Description-Content-Type: text/markdown

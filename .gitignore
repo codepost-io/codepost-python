@@ -3,7 +3,7 @@
 /build
 /dist
 /MANIFEST
-/codepost.egg-info
+*.egg-info
 .python-version
 *.pyc
 *.egg

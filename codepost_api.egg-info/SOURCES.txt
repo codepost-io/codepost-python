@@ -1,8 +1,0 @@
-README.md
-setup.py
-codepost_api/__init__.py
-codepost_api/helpers.py
-codepost_api.egg-info/PKG-INFO
-codepost_api.egg-info/SOURCES.txt
-codepost_api.egg-info/dependency_links.txt
-codepost_api.egg-info/top_level.txt

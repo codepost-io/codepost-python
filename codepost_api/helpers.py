@@ -7,6 +7,9 @@
 #
 ##########################################################################
 
+# Python 2
+from __future__ import print_function
+
 import sys as _sys
 import requests as _requests
 
@@ -45,7 +48,11 @@ except ImportError:
 
 class _DocEnum(_Enum):
     def __init__(self, value, doc):
-        super().__init__()
+        try:
+            super().__init__()
+        except TypeError:
+            # Python 2: the super() syntax was only introduced in Python 3.x
+            super(_DocEnum, self).__init__()
         self._value_ = value
         self.__doc__ = doc
 

@@ -5,8 +5,8 @@ README = open("README.md").read()
 
 # This call to setup() does all the work
 setup(
-    name="codepost_api",
-    version="1.0.0",
+    name="codepost-api",
+    version="1.0.1",
     description="Python bindings for the codePost API",
     long_description=README,
     long_description_content_type="text/markdown",

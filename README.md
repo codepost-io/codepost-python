@@ -1,6 +1,6 @@
-# codePost API - Python Library
+# codePost API — Python Bindings
 
-The codePost API provides a set of helper functions used to access the codePost API from applications written in the Python language.
+The package provides a set of helper functions used to access the codePost API from applications written in the Python language.
 
 ## Documentation
 
@@ -11,13 +11,13 @@ This library implements helper methods to access the codePost API. Check out the
 The recommended method to install this codePost API Python library, is to use pip:
 
 ```
-pip install codepost_api
+pip install codePost-api
 ```
 
 or for local development:
 
 ```
-pip install --user codepost_api
+pip install --user codePost-api
 ```
 
 ## Usage

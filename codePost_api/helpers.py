@@ -1082,3 +1082,86 @@ def _submission_list_is_unclaimed(submissions):
         if submission['grader'] is not None:
             return False
     return True
+
+def get_course_grades(api_key, course_name, course_period):
+    """
+    Returns a dictionary mapping every student in the specified course
+    to a dictionary, which itself maps assignment names to grades.
+    """
+    # Course is an object with these properties:
+    # {u'assignments': [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103],
+    #  u'emailNewUsers': True,
+    #  u'id': 11,
+    #  u'name': u'COS126',
+    #  u'organization': 1,
+    #  u'period': u'S2019',
+    #  u'sections': [64, 65, 66, 67, 68, 69, 70, 71, 89, 90, 91, 92, 93, 94, 95],
+    #  u'sendReleasedSubmissionsToBack': True,
+    #  u'showStudentsStatistics': True,
+    #  u'timezone': u'US/Eastern'}
+
+    course = course = get_course_roster_by_name(
+        api_key=api_key,
+        course_name=course_name,
+        course_period=course_period)
+
+    # Mapping:  student -> (assignment -> grade)
+    # This data structure is optimizing storing for output
+    grades = {}
+
+    for aid in course["assignments"]:
+
+        # Assignment object:
+        # {u'course': 11,
+        #  u'id': 92,
+        #  u'isReleased': True,
+        #  u'mean': 19.49,
+        #  u'median': 20.0,
+        #  u'name': u'Loops',
+        #  u'points': 20,
+        #  u'rubricCategories': [519, 640, 641, 642, 643, 644, 645],
+        #  u'sortKey': 1}
+        assignment_info = get_assignment_info_by_id(
+            api_key=api_key,
+            assignment_id=aid)
+
+        assignment_name = assignment_info["name"]
+
+        # Submission object:
+        # {u'assignment': 92,
+        #  u'dateEdited': u'2019-02-20T22:55:55.335293-05:00',
+        #  u'files': [40514, 40515, 40516, 40517, 40518, 40519, 40520],
+        #  u'grade': 20.0,
+        #  u'grader': u'jgrader@princeton.edu',
+        #  u'id': 9351,
+        #  u'isFinalized': True,
+        #  u'queueOrderKey': 1,
+        #  u'students': [u'jstudent@princeton.edu']}
+        submissions = get_assignment_submissions(
+            api_key=api_key,
+            assignment_id=aid)
+
+        for submission in submissions:
+
+            # Ungraded
+            if submission.get("grade", None) == None:
+                continue
+
+            # Unclaimed
+            if submission.get("grader", None) == None:
+                continue
+
+            # Unfinalized
+            if submission.get("isFinalized", False) == False:
+                continue
+
+            # Insert the grade in our data structure
+            for student in submission.get("students", list()):
+                student_grades = grades.get(student, dict())
+                student_grades[assignment_name] = submission["grade"]
+                grades[student] = student_grades
+
+    # At this point, grades contains all the grades of the assignments
+    # of the course
+
+    return grades

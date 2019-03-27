@@ -1100,7 +1100,7 @@ def get_course_grades(api_key, course_name, course_period):
     #  u'showStudentsStatistics': True,
     #  u'timezone': u'US/Eastern'}
 
-    course = course = get_course_roster_by_name(
+    course = get_course_roster_by_name(
         api_key=api_key,
         course_name=course_name,
         course_period=course_period)

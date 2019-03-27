@@ -442,6 +442,84 @@ def get_available_courses(api_key, course_name=None, course_period=None):
     return list(result)
 
 
+def get_course_roster_by_id(api_key, course_id):
+    """
+    Returns the course roster, given the course's ID. The course ID
+    can be obtained from `get_available_courses`; alternatively you
+    can directly obtain the course roster using the course name and
+    period if you know it with `get_course_roster_by_name`.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.get(
+            "{}/courses/{:d}/roster/".format(BASE_URL, course_id),
+            headers=auth_headers
+        )
+
+        if r.status_code != 200:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            get_course_roster_by_id: Unexpected exception while retrieving the
+            course roster from the provided course id({: d}):
+               {}
+            """.format(course_id, exc)
+        )
+
+def get_course_roster_by_name(api_key, course_name, course_period):
+    """
+    Returns the course information and roster for a course, given its
+    name and period. Will throw an exception if no such course is
+    available, or if either of the arguments are left blank and more
+    than one course is matched.
+    """
+
+    courses = get_available_courses(
+        api_key=api_key,
+        course_name=course_name,
+        course_period=course_period)
+    
+    if len(courses) == 0:
+        raise RuntimeError(
+            ("get_course_roster_by_name: No course '{course_name}_{course_name}' "
+             "is available, or codePost API key '{api_key:.5}...' is invalid or "
+             "does not have access to it.").format(
+                 api_key=api_key,
+                 course_name=course_name,
+                 course_period=course_period,
+            )
+        )
+    elif len(courses) > 1:
+        raise RuntimeError(
+            ("get_course_roster_by_name: Several courses match the filter "
+             " '{course_name}_{course_name}' your filtering criteria must be "
+             "narrower as only one course can be queried for the time "
+             "being.").format(
+                 course_name=course_name,
+                 course_period=course_period,
+            )
+        )
+    
+    course_info = courses[0]
+
+    course_roster = get_course_roster_by_id(
+        api_key=api_key,
+        course_id=course_info["id"]
+    )
+
+    # Combine course info and roster for convenience
+    # (hey, we think deeply about our users comfort and convenience!!!)
+    
+    course_info.update(course_roster)
+
+    return course_info
+
 def get_assignment_info_by_id(api_key, assignment_id):
     """
     Returns the assignment information dictionary, given the assignment's ID.

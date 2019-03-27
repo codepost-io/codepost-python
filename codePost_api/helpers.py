@@ -423,7 +423,7 @@ def get_available_courses(api_key, course_name=None, course_period=None):
         raise RuntimeError(
             """
             get_available_courses: Unexpected exception while retrieving the list
-            of available courses/terms; this could be related to the API key({: .5})
+            of available courses/terms; this could be related to the API key({:.5})
             being either unavailable, invalid, or stale:
                {}
             """.format(api_key, exc)
@@ -567,7 +567,7 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
         raise RuntimeError(
             """
             get_assignment_info: Either no course with the specified course({})
-            and period({}) exists, or the provided API key({: .5}...) does not have
+            and period({}) exists, or the provided API key({:.5}...) does not have
             access to it.
             """.format(course_name, course_period, api_key)
         )

@@ -1083,10 +1083,12 @@ def _submission_list_is_unclaimed(submissions):
             return False
     return True
 
-def get_course_grades(api_key, course_name, course_period):
+def get_course_grades(api_key, course_name, course_period, only_finalized=True):
     """
     Returns a dictionary mapping every student in the specified course
-    to a dictionary, which itself maps assignment names to grades.
+    to a dictionary, which itself maps assignment names to grades. By
+    default, only finalized submission grades are return, but this can
+    be changed with the `only_finalized` boolean parameter.
     """
     # Course is an object with these properties:
     # {u'assignments': [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103],
@@ -1153,7 +1155,8 @@ def get_course_grades(api_key, course_name, course_period):
 
             # Unfinalized
             if submission.get("isFinalized", False) == False:
-                continue
+                if only_finalized:
+                    continue
 
             # Insert the grade in our data structure
             for student in submission.get("students", list()):

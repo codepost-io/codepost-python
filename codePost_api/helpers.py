@@ -375,16 +375,19 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                     extension=file["extension"]
                 )
 
-
     # Delete files in existing_files but not in newest_files, if instructed to do so
     if mode.value["deleteUnspecifiedFiles"]:
-      newest_files_names = [x["name"] for x in newest_files]
-      for file in existing_files:
-        if file not in newest_files_names:
-          _print_info("Deleting file {}, since it was not specified in the upload and deleteUnspecifiedFiles is True.".format(file))
-          delete_file(api_key=api_key,
-                      file_id=existing_files[file]["id"])
-          submission_was_modified = True
+        newest_files_names = [x["name"] for x in newest_files]
+        for file in existing_files:
+            if file not in newest_files_names:
+                _print_info(
+                        ("Deleting file {}, since it was not specified in the " +
+                         "upload and deleteUnspecifiedFiles is True.").format(file))
+                delete_file(
+                    api_key=api_key,
+                    file_id=existing_files[file]["id"]
+                )
+                submission_was_modified = True
 
     if not submission_was_modified:
         _print_info("Nothing to add or update, submission was left unchanged.")
@@ -553,7 +556,7 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
     assignment name) tuple. This contains, in particular, the ID of the assignment that
     is considered.
     """
-    auth_headers = {"Authorization": "Token {}".format(api_key)}
+    _auth_headers = {"Authorization": "Token {}".format(api_key)}
 
     # Retrieve all available courses
     courses = get_available_courses(

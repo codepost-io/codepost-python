@@ -253,7 +253,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
 
         # CASE 1: No existing submission => create a new submission
         try:
-            post_submission(
+            return post_submission(
                 api_key=api_key,
                 assignment_id=assignment_id,
                 students=students,
@@ -263,6 +263,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             if not mode["allowPartial"]:
                 e.force_cleanup()
             raise e
+        # END CASE 1
 
     # There is at least one (maybe more) existing submissions
 
@@ -317,7 +318,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                 )
 
         try:
-            post_submission(
+            return post_submission(
                 api_key=api_key,
                 assignment_id=assignment_id,
                 students=students,
@@ -327,6 +328,8 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             if not mode["allowPartial"]:
                 e.force_cleanup()
             raise e
+        
+        # END CASE 2
 
     # CASE 3: There is exactly one submission.
     submission = list(existing_submissions.values())[0]

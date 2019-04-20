@@ -204,9 +204,18 @@ class UploadError(RuntimeError):
         self._trace = ""
     
     def force_cleanup(self):
-
+        """
+        Delete submissions and/or files created during a transaction with codePost that had
+        to be reverted because of an error.
+        """
         self._trace += "<<"
         
+        # NOTE: We manually delete the models bottom-up (comments -> files -> submissions),
+        # to provide the user with a log of the objects that have been affected. However,
+        # because the database enforces relationship constraints, it would be sufficient
+        # to delete the top-most model, i.e., a call to delete the submission will delete
+        # all its orphaned child objects.
+
         for f_id in self._file_ids:
             try:
                 delete_file(api_key=self.api_key, file_id=f_id)

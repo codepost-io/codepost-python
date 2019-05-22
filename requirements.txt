@@ -1,3 +1,3 @@
 nose
 requests
-urllib
+urllib3

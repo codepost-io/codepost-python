@@ -1,1 +1,3 @@
-nosetests
+nose
+requests
+urllib

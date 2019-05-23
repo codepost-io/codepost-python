@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from nose.tools import assert_equal, assert_is_not_none
 
 # codepost_api imports...
-import codepost_api.helpers as helpers
+import codepost_api as helpers
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'

@@ -1,1 +1,1 @@
-from codePost_api.helpers import *
+from codepost_api.helpers import *

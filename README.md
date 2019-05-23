@@ -28,7 +28,7 @@ To use the functions available in this library, you must have a codePost API key
 
 ## Development
 
-To start developing, install [pipenv][pipenv], then install all dependencies for this project:
+To start developing, install [pipenv][https://github.com/pypa/pipenv], then install all dependencies for this project:
 
     pipenv install --dev
 

@@ -19,14 +19,14 @@ MAKE := $(MAKE) --no-print-directory
 SHELL = bash
 
 ci:
-	pipenv run pytest
+	pipenv run pytest --cov=codepost_api
 
 init:
 	pip install --upgrade pip~=18.0 pipenv==2018.10.13
 	pipenv install --dev --skip-lock
 
 coveralls:
-  pipenv run coveralls
+	pipenv run coveralls
 
 default:
 	@echo "Makefile for $(PACKAGE_NAME)"

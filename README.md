@@ -1,5 +1,6 @@
 # codePost API Python Library
 [![Build Status](https://travis-ci.com/codepost-io/codePost-api-python.svg?branch=master)](https://travis-ci.com/codepost-io/codePost-api-python.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/codepost-io/codePost-api-python/badge.svg?branch=master)](https://coveralls.io/github/codepost-io/codePost-api-python?branch=master)
 
 The package provides a set of helper functions used to access the codePost API from applications written in the Python language.
 

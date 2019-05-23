@@ -5,6 +5,8 @@ verify_ssl = true
 
 [dev-packages]
 pytest = ">=4.4"
+pytest-cov = ">=2.6"
+coveralls = "*"
 
 [packages]
 nose = "*"

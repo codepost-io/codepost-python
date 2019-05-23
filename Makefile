@@ -18,6 +18,9 @@ PATH := $(VIRTUAL_ENV)/bin:$(PATH)
 MAKE := $(MAKE) --no-print-directory
 SHELL = bash
 
+ci:
+	pipenv run pytest
+
 default:
 	@echo "Makefile for $(PACKAGE_NAME)"
 	@echo
@@ -81,4 +84,4 @@ clean:
 	@find . -depth -type d -name __pycache__ -exec rm -Rf {} \;
 	@find . -type f -name '*.pyc' -delete
 
-.PHONY: default install reset check publish clean # test tox readme docs 
+.PHONY: default install reset check publish clean # test tox readme docs

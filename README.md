@@ -25,3 +25,21 @@ pip install --user codePost-api
 ## Usage
 
 To use the functions available in this library, you must have a codePost API key. As of March 2019, to retrieve a codePost API key, you must be a administrator of a course on codePost. It will then be accessible from [https://codepost.io/settings](https://codepost.io/settings).
+
+## Development
+
+To start developing, install [pipenv][pipenv], then install all dependencies for this project:
+
+    pipenv install --dev
+
+Run all tests on all supported versions of Python which you have locally installed:
+
+    make test
+
+Run all tests for a specific Python version (modify `-e` according to your Python target):
+
+    pipenv run tox -e py27
+
+Run all tests in a single file for a specific Python version:
+
+    pipenv run tox -e py27 -- tests/test_helpers.py

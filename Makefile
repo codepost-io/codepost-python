@@ -28,6 +28,9 @@ init:
 coveralls:
 	pipenv run coveralls
 
+test:
+	pipenv run tox -p auto
+
 default:
 	@echo "Makefile for $(PACKAGE_NAME)"
 	@echo

@@ -9,6 +9,15 @@
 *.egg
 *.class
 
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+.pytest_cache
+nosetests.xml
+coverage.xml
+htmlcov/
+
 # Python binaries
 *.pyc
 __pycache__

@@ -1,5 +1,10 @@
 # Standard library imports...
-from unittest.mock import Mock, patch
+try:
+  # python 3
+  from unittest.mock import Mock, patch
+except ImportError:
+  # python 2, requires dependency
+  from mock import Mock, patch
 
 # Third-party imports...
 from nose.tools import assert_equal, assert_is_not_none

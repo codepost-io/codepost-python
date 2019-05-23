@@ -487,7 +487,7 @@ def get_course_roster_by_name(api_key, course_name, course_period):
         api_key=api_key,
         course_name=course_name,
         course_period=course_period)
-    
+
     if len(courses) == 0:
         raise RuntimeError(
             ("get_course_roster_by_name: No course '{course_name}_{course_name}' "
@@ -508,7 +508,7 @@ def get_course_roster_by_name(api_key, course_name, course_period):
                  course_period=course_period,
             )
         )
-    
+
     course_info = courses[0]
 
     course_roster = get_course_roster_by_id(
@@ -518,7 +518,7 @@ def get_course_roster_by_name(api_key, course_name, course_period):
 
     # Combine course info and roster for convenience
     # (hey, we think deeply about our users comfort and convenience!!!)
-    
+
     course_info.update(course_roster)
 
     return course_info
@@ -1147,6 +1147,7 @@ def get_course_grades(api_key, course_name, course_period, only_finalized=True):
             assignment_id=aid)
 
         for submission in submissions:
+
 
             # Ungraded
             if submission.get("grade", None) == None:

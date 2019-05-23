@@ -21,6 +21,10 @@ SHELL = bash
 ci:
 	pipenv run pytest
 
+init:
+	pip install --upgrade pip~=18.0 pipenv==2018.10.13
+	pipenv install --dev --skip-lock
+
 default:
 	@echo "Makefile for $(PACKAGE_NAME)"
 	@echo

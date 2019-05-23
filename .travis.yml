@@ -1,4 +1,7 @@
 language: python
 
+install:
+  - make init
+
 script:
   - make ci

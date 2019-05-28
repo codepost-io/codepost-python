@@ -83,6 +83,7 @@ class UploadModes(_DocEnum):
     """
 
     CAUTIOUS = {
+        "allowPartial": False,
         "updateIfExists": False,
         "updateIfClaimed": False,
         "resolveStudents": False,
@@ -101,6 +102,7 @@ class UploadModes(_DocEnum):
     """
 
     EXTEND = {
+        "allowPartial": False,
         "updateIfExists": True,
         "updateIfClaimed": False,
         "resolveStudents": True,
@@ -120,6 +122,7 @@ class UploadModes(_DocEnum):
     """
 
     DIFFSCAN = {
+        "allowPartial": False,
         "updateIfExists": True,
         "updateIfClaimed": False,
         "resolveStudents": True,
@@ -142,6 +145,7 @@ class UploadModes(_DocEnum):
     """
 
     OVERWRITE = {
+        "allowPartial": False,
         "updateIfExists": True,
         "updateIfClaimed": True,
         "resolveStudents": True,
@@ -162,6 +166,7 @@ class UploadModes(_DocEnum):
     """
 
     PREGRADE = {
+        "allowPartial": False,
         "updateIfExists": True,
         "updateIfClaimed": False,
         "resolveStudents": True,
@@ -184,7 +189,54 @@ DEFAULT_UPLOAD_MODE = UploadModes.CAUTIOUS
 # Core upload logic
 ###########################################################################################
 class UploadError(RuntimeError):
-    pass
+
+    def __init__(self, message, api_key=None, assignment_id=None, submission_id=None, file_ids=None, *args, **kwargs):
+        super(UploadError, self).__init__(message, *args, **kwargs)
+        
+        self.api_key = api_key
+        self._assignment_id = assignment_id
+        
+        # Initialize object lists
+        self._submission_ids = [] if submission_id == None else [ submission_id ]
+        self._file_ids = [] if file_ids == None else file_ids
+
+        # Trace of operations undertaken by the cleanup method
+        self._trace = ""
+    
+    def force_cleanup(self):
+        """
+        Delete submissions and/or files created during a transaction with codePost that had
+        to be reverted because of an error.
+        """
+        self._trace += "<<"
+        
+        # NOTE: We manually delete the models bottom-up (comments -> files -> submissions),
+        # to provide the user with a log of the objects that have been affected. However,
+        # because the database enforces relationship constraints, it would be sufficient
+        # to delete the top-most model, i.e., a call to delete the submission will delete
+        # all its orphaned child objects.
+
+        for f_id in self._file_ids:
+            try:
+                delete_file(api_key=self.api_key, file_id=f_id)
+            except:
+                self._trace += "!file({}); ".format(f_id)
+            else:
+                self._trace += "-file({}); ".format(f_id)
+        
+        for s_id in self._submission_ids:
+            try:
+                delete_submission(api_key=self.api_key, submission_id=s_id)
+            except:
+                self._trace += "!submission({}); ".format(s_id)
+            else:
+                self._trace += "-submission({}); ".format(s_id)
+        
+        self._trace += ">>"
+        
+        return self._trace
+
+
 
 def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_MODE):
 
@@ -209,13 +261,18 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
     if len(existing_submissions) == 0:
 
         # CASE 1: No existing submission => create a new submission
-
-        return post_submission(
-            api_key=api_key,
-            assignment_id=assignment_id,
-            students=students,
-            files=files
-        )
+        try:
+            return post_submission(
+                api_key=api_key,
+                assignment_id=assignment_id,
+                students=students,
+                files=files
+            )
+        except UploadError as e:
+            if not mode["allowPartial"]:
+                e.force_cleanup()
+            raise e
+        # END CASE 1
 
     # There is at least one (maybe more) existing submissions
 
@@ -269,12 +326,19 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                     submission_id=changed_submission["id"]
                 )
 
-        return post_submission(
-            api_key=api_key,
-            assignment_id=assignment_id,
-            students=students,
-            files=files
-        )
+        try:
+            return post_submission(
+                api_key=api_key,
+                assignment_id=assignment_id,
+                students=students,
+                files=files
+            )
+        except UploadError as e:
+            if not mode["allowPartial"]:
+                e.force_cleanup()
+            raise e
+        
+        # END CASE 2
 
     # CASE 3: There is exactly one submission.
     submission = list(existing_submissions.values())[0]
@@ -289,12 +353,18 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
     )
 
     # Process the change in files
-    submission_was_modified = _upload_submission_filediff(
-        api_key=api_key,
-        submission_info=submission,
-        newest_files=files,
-        mode=mode
-    )
+    submission_was_modified = False
+    try:
+        submission_was_modified = _upload_submission_filediff(
+            api_key=api_key,
+            submission_info=submission,
+            newest_files=files,
+            mode=mode
+        )
+    except UploadError as e:
+        if not mode["allowPartial"]:
+            e.force_cleanup()
+        raise e
 
     # Depending on the outcome of the file changes, proceed with the finishing actions
     if submission_was_modified:
@@ -311,7 +381,10 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                 submission_id=submission_id
             )
 
-    return True
+    # Return updated submission dictionary (equivalent to what post_submission would
+    # return in the above exit paths)
+    submission = get_submission_by_id(api_key=api_key, submission_id=submission_id)
+    return submission
 
 
 def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEFAULT_UPLOAD_MODE):
@@ -321,11 +394,14 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
         file["name"]: file
         for file in [
             get_file(api_key=api_key, file_id=file_id)
-            for file_id in submission_info['files']
+            for file_id in submission_info["files"]
         ]
     }
 
-    #
+    # Compute files that were added
+    added_file_ids = []
+
+    # Flag to determine whether to do the post-modification actions
     submission_was_modified = False
 
     for file in newest_files:
@@ -347,18 +423,33 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                 if data_existing != data_new:
 
                     submission_was_modified = True
+
                     _print_info(
                         "Replacing contents of {} (note: all comments will be deleted)")
+                    
+                    try:
+                        delete_file(api_key=api_key,
+                                    file_id=existing_files[file["name"]]["id"])
 
-                    delete_file(api_key=api_key,
-                                file_id=existing_files[file["name"]]["id"])
-                    post_file(
-                        api_key=api_key,
-                        submission_id=submission_info["id"],
-                        filename=file["name"],
-                        content=file["code"],
-                        extension=file["extension"]
-                    )
+                        file_obj = post_file(
+                            api_key=api_key,
+                            submission_id=submission_info["id"],
+                            filename=file["name"],
+                            content=file["code"],
+                            extension=file["extension"]
+                        )
+                    except:
+                        raise UploadError(
+                            message="Unexpected error while replacing a file.",
+                            # Additional fields
+                            api_key=api_key,
+                            assignment_id=submission_info.get("assignment"),
+                            submission_id=submission_info.get("id"),
+                            file_ids=added_file_ids,
+                        )
+
+                    if file_obj != None and file_obj.get("id", None) != None:
+                        added_file_ids.append(file.obj["id"])
 
         else:
 
@@ -367,13 +458,26 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                 submission_was_modified = True
                 _print_info("Adding file {}.".format(file["name"]))
 
-                post_file(
-                    api_key=api_key,
-                    submission_id=submission_info["id"],
-                    filename=file["name"],
-                    content=file["code"],
-                    extension=file["extension"]
-                )
+                try:
+                    file_obj = post_file(
+                        api_key=api_key,
+                        submission_id=submission_info["id"],
+                        filename=file["name"],
+                        content=file["code"],
+                        extension=file["extension"]
+                    )
+                except:
+                    raise UploadError(
+                        message="Unexpected error while adding a file.",
+                        # Additional fields
+                        api_key=api_key,
+                        assignment_id=submission_info.get("assignment"),
+                        submission_id=submission_info.get("id"),
+                        file_ids=added_file_ids,
+                    )
+
+                if file_obj != None and file_obj.get("id", None) != None:
+                    added_file_ids.append(file.obj["id"])
 
     # Delete files in existing_files but not in newest_files, if instructed to do so
     if mode.value["deleteUnspecifiedFiles"]:
@@ -676,6 +780,33 @@ def get_assignment_submissions(api_key, assignment_id, student=None, grader=None
 
     return result
 
+def get_submission_by_id(api_key, submission_id):
+    """
+    Returns the submission information dictionary, given the submission's ID.
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+    try:
+        r = _requests.get(
+            "{}/submissions/{:d}/".format(BASE_URL, submission_id),
+            headers=auth_headers
+        )
+
+        if r.status_code != 200:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+
+        return r.json()
+
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            get_submission_by_id: Unexpected exception while retrieving the
+            submission from the provided id({: d}):
+               {}
+            """.format(submission_id, exc)
+        )
+
 def get_file(api_key, file_id):
     """
     Returns the file given its file ID; the file IDs are provided within a
@@ -907,12 +1038,15 @@ def post_file(api_key, submission_id, filename, content, extension):
         return r.json()
 
     except Exception as exc:
-        raise RuntimeError(
-            """
-            post_file: Unexpected exception while uploading the file '{}'
-            to submission {: d}:
-               {}
-            """.format(filename, submission_id, exc)
+        raise UploadError(
+            message=("""
+                post_file: Unexpected exception while uploading the file '{}'
+                to submission {: d}:
+                {}
+                """.format(filename, submission_id, exc)),
+            # Additional fields
+            api_key=api_key,
+            submission_id=submission_id,
         )
 
 
@@ -946,82 +1080,96 @@ def post_submission(api_key, assignment_id, students, files):
         submission = r.json()
 
     except Exception as exc:
-        raise RuntimeError(
-            """
-            post_submission: Unexpected exception while creating a submission
-            for students {} for assignment {}:
-               {}
-            """.format(students, assignment_id, exc)
+        submission_id = None if submission == None else submission.get("id", None)
+        raise UploadError(
+            message=("""
+                post_submission: Unexpected exception while creating a submission
+                for students {} for assignment {}:
+                {}
+                """.format(students, assignment_id, exc)),
+            # Additional fields
+            api_key=api_key,
+            assignment_id=assignment_id,
+            submission_id=submission_id,
         )
 
     # Upload the individual files
+    added_file_ids = []
     try:
         for file in files:
-            post_file(
+            file_obj = post_file(
                 api_key=api_key,
                 submission_id=submission.get("id"),
                 filename=file["name"],
                 content=file["code"],
                 extension=file["extension"]
             )
+            file_id = None if file_obj == None else file_obj.get("id", None)
+            if file_id != None:
+                added_file_ids.append(file_id)
 
     except Exception as exc:
-        raise RuntimeError(
-            """
-            post_submission: Unexpected exception while adding files to newly
-            created submission {}:
-               {}
-            """.format(submission.get("id"), exc)
+        raise UploadError(
+            message=("""
+                post_submission: Unexpected exception while adding files to newly
+                created submission {}:
+                {}
+                """.format(submission.get("id"), exc)),
+            # Additional fields
+            api_key=api_key,
+            assignment_id=assignment_id,
+            submission_id=submission.get("id"),
+            file_ids=added_file_ids,
         )
 
     return submission
 
 def post_comment(api_key, file, text, pointDelta, startChar, endChar, startLine, endLine, rubricComment=None):
-  """
-  Adds comment specified by (startChar, endChar, startLine, endLine) to file
-  """
-  auth_headers = {"Authorization": "Token {}".format(api_key)}
-
-  # Build the comment payload
-  payload = {
-    "text" : text,
-    "pointDelta" : pointDelta,
-    "startChar" : startChar,
-    "endChar" : endChar,
-    "startLine" : startLine,
-    "endLine" : endLine,
-    "file" : file.get("id"), # from arg
-  }
-
-  if rubricComment is not None:
-    payload["rubricComment"] = rubricComment
-
-  comment = None
-
-  # Create the comment
-  try:
-      r = _requests.post(
-          "{}/comments/".format(BASE_URL),
-          headers=auth_headers,
-          data=payload
-      )
-
-      if r.status_code != 201:
-          raise RuntimeError("HTTP request returned {}: {}".format(
-              r.status_code, r.content))
-
-      comment = r.json()
-
-  except Exception as exc:
-      raise RuntimeError(
-          """
-          post_comment: Unexpected exception while creating a comment
-          for file with id {}:
-             {}
-          """.format(payload["file"], exc)
-      )
-
-  return comment
+    """
+    Adds comment specified by (startChar, endChar, startLine, endLine) to file
+    """
+    auth_headers = {"Authorization": "Token {}".format(api_key)}
+    
+    # Build the comment payload
+    payload = {
+        "text" : text,
+        "pointDelta" : pointDelta,
+        "startChar" : startChar,
+        "endChar" : endChar,
+        "startLine" : startLine,
+        "endLine" : endLine,
+        "file" : file.get("id"), # from arg
+    }
+    
+    if rubricComment is not None:
+        payload["rubricComment"] = rubricComment
+    
+    comment = None
+    
+    # Create the comment
+    try:
+        r = _requests.post(
+            "{}/comments/".format(BASE_URL),
+            headers=auth_headers,
+            data=payload
+        )
+    
+        if r.status_code != 201:
+            raise RuntimeError("HTTP request returned {}: {}".format(
+                r.status_code, r.content))
+    
+        comment = r.json()
+    
+    except Exception as exc:
+        raise RuntimeError(
+            """
+            post_comment: Unexpected exception while creating a comment
+            for file with id {}:
+               {}
+            """.format(payload["file"], exc)
+        )
+    
+    return comment
 
 def set_submission_students(api_key, submission_id, students):
     """

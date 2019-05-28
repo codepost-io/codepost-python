@@ -1,0 +1,10 @@
+language: python
+
+install:
+  - make init
+
+script:
+  - make ci
+
+after_success:
+  - make coveralls

@@ -1,0 +1,19 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = ">=4.4"
+pytest-cov = ">=2.6"
+coveralls = "*"
+tox = "*"
+
+[packages]
+nose = "*"
+requests = "*"
+urllib3 = "*"
+codepost_api = {path = ".",editable = true}
+
+[requires]
+python_version = "3.7"

@@ -943,7 +943,7 @@ def remove_comments(api_key, submission_id=None, file_id=None):
                 headers=auth_headers
             )
 
-            if r.status_code != 204:
+            if r.status_code == 204:
                 comments_to_delete += r.json().get("comments", list())
                 deleted_comments += 1
         except:
@@ -1295,6 +1295,7 @@ def get_course_grades(api_key, course_name, course_period, only_finalized=True):
             assignment_id=aid)
 
         for submission in submissions:
+
 
             # Ungraded
             if submission.get("grade", None) == None:

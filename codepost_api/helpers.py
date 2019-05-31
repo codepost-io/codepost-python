@@ -515,7 +515,7 @@ def get_available_courses(api_key, course_name=None, course_period=None):
 
     try:
         r = _requests.get(
-            "{}/users/me".format(BASE_URL),
+            "{}/users/me/".format(BASE_URL),
             headers=auth_headers
         )
 

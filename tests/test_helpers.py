@@ -9,8 +9,8 @@ except ImportError:
 # Third-party imports...
 from nose.tools import assert_equal, assert_is_not_none
 
-# codepost_api imports...
-import codepost_api as helpers
+# codePost_api imports...
+import codePost_api as helpers
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'
@@ -25,7 +25,7 @@ TEST_API_KEY = 'TEST_KEY'
 class TestGetAvailableCourses(object):
     @classmethod
     def setup_class(cls):
-      cls.mock_get_patcher = patch('codepost_api.helpers._requests.get')
+      cls.mock_get_patcher = patch('codePost_api.helpers._requests.get')
       cls.mock_get = cls.mock_get_patcher.start()
 
     @classmethod
@@ -95,7 +95,7 @@ class TestGetAvailableCourses(object):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.get')
+@patch('codePost_api.helpers._requests.get')
 def test_get_course_roster_by_id(mock_get):
   roster = {'id': 1}
 
@@ -110,8 +110,8 @@ def test_get_course_roster_by_id(mock_get):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers.get_course_roster_by_id')
-@patch('codepost_api.helpers.get_available_courses')
+@patch('codePost_api.helpers.get_course_roster_by_id')
+@patch('codePost_api.helpers.get_available_courses')
 def test_get_course_roster_by_name(mock_get_available_courses, mock_get_course_roster_by_id):
   course1 = {'id' : 1, 'name' : 'COS126', 'period' : 'S2019'}
   roster = {'id': 1, 'students': ['someEmail@princeton.edu']}
@@ -130,7 +130,7 @@ def test_get_course_roster_by_name(mock_get_available_courses, mock_get_course_r
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.get')
+@patch('codePost_api.helpers._requests.get')
 def test_get_assignment_info_by_id(mock_get):
   assignment = {'id': 1}
 
@@ -145,8 +145,8 @@ def test_get_assignment_info_by_id(mock_get):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers.get_assignment_info_by_id')
-@patch('codepost_api.helpers.get_available_courses')
+@patch('codePost_api.helpers.get_assignment_info_by_id')
+@patch('codePost_api.helpers.get_available_courses')
 def test_get_assignment_info_by_name(mock_get_available_courses, mock_get_assignment_info_by_id):
 
   # mock get_available_courses
@@ -170,7 +170,7 @@ def test_get_assignment_info_by_name(mock_get_available_courses, mock_get_assign
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.get')
+@patch('codePost_api.helpers._requests.get')
 def test_get_assignment_submissions(mock_get):
   # Configure the mock to return a response with an OK status code.
   submission1 = {
@@ -196,7 +196,7 @@ def test_get_assignment_submissions(mock_get):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.get')
+@patch('codePost_api.helpers._requests.get')
 def test_get_file(mock_get):
   # Configure the mock to return a response with an OK status code.
   file = {
@@ -220,7 +220,7 @@ def test_get_file(mock_get):
 # - should we return the uploaded submission here instead of a boolean
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.patch')
+@patch('codePost_api.helpers._requests.patch')
 def test_set_submission_grader(mock_patch):
   submission1 = {
     'id' : 1,
@@ -239,7 +239,7 @@ def test_set_submission_grader(mock_patch):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.patch')
+@patch('codePost_api.helpers._requests.patch')
 def test_unclaim_submission(mock_patch):
   submission1 = {
     'id' : 1,
@@ -258,8 +258,8 @@ def test_unclaim_submission(mock_patch):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.delete')
-@patch('codepost_api.helpers._requests.get')
+@patch('codePost_api.helpers._requests.delete')
+@patch('codePost_api.helpers._requests.get')
 def test_remove_comments(mock_get, mock_delete):
   file1 = {
     'id' : 1,
@@ -280,7 +280,7 @@ def test_remove_comments(mock_get, mock_delete):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.delete')
+@patch('codePost_api.helpers._requests.delete')
 def test_delete_submission(mock_delete):
   mock_delete.return_value.status_code = 204
   response = helpers.delete_submission(TEST_API_KEY, 1)
@@ -291,7 +291,7 @@ def test_delete_submission(mock_delete):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.delete')
+@patch('codePost_api.helpers._requests.delete')
 def test_delete_file(mock_delete):
   mock_delete.return_value.status_code = 204
   response = helpers.delete_file(TEST_API_KEY, 1)
@@ -302,7 +302,7 @@ def test_delete_file(mock_delete):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.post')
+@patch('codePost_api.helpers._requests.post')
 def test_post_file(mock_post):
   mock_post.return_value.status_code = 201
   response = helpers.post_file(TEST_API_KEY, 1, 'test.txt', 'hello', 'txt')
@@ -313,7 +313,7 @@ def test_post_file(mock_post):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.post')
+@patch('codePost_api.helpers._requests.post')
 def test_post_submission(mock_post):
   file = {'name' : 'test.txt', 'code' : 'hello', 'extension' : 'txt'}
   mock_post.return_value.status_code = 201
@@ -325,7 +325,7 @@ def test_post_submission(mock_post):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.post')
+@patch('codePost_api.helpers._requests.post')
 def test_post_comment(mock_post):
   file = {'name' : 'test.txt', 'code' : 'hello', 'extension' : 'txt', 'id' : 1}
   mock_post.return_value.status_code = 201
@@ -337,7 +337,7 @@ def test_post_comment(mock_post):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.patch')
+@patch('codePost_api.helpers._requests.patch')
 def test_set_submission_students(mock_patch):
   mock_patch.return_value.status_code = 200
   response = helpers.set_submission_students(TEST_API_KEY, 1, ['student1@codepost.io'])
@@ -348,8 +348,8 @@ def test_set_submission_students(mock_patch):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers._requests.delete')
-@patch('codepost_api.helpers._requests.patch')
+@patch('codePost_api.helpers._requests.delete')
+@patch('codePost_api.helpers._requests.patch')
 def test_remove_students_from_submission(mock_patch, mock_delete):
   submission1 = {
     'id' : 1,
@@ -381,9 +381,9 @@ def test_remove_students_from_submission(mock_patch, mock_delete):
 # Notes:
 #
 #############################################################################
-@patch('codepost_api.helpers.get_assignment_submissions')
-@patch('codepost_api.helpers.get_assignment_info_by_id')
-@patch('codepost_api.helpers.get_course_roster_by_name')
+@patch('codePost_api.helpers.get_assignment_submissions')
+@patch('codePost_api.helpers.get_assignment_info_by_id')
+@patch('codePost_api.helpers.get_course_roster_by_name')
 def test_get_course_grades(mock_roster, mock_assignment, mock_submissions):
   roster = {
     'name' : 'COS126',

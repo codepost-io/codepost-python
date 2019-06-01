@@ -19,7 +19,7 @@ MAKE := $(MAKE) --no-print-directory
 SHELL = bash
 
 ci:
-	pipenv run pytest --cov=codepost_api
+	pipenv run pytest --cov=codePost_api
 
 init:
 	pip install --upgrade pip~=18.0 pipenv==2018.10.13

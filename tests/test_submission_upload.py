@@ -9,14 +9,14 @@ except ImportError:
 # Third-party imports...
 from nose.tools import assert_equal, assert_is_not_none
 
-# codepost_api imports...
-import codepost_api as helpers
+# codePost_api imports...
+import codePost_api as helpers
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'
 
-@patch('codepost_api.helpers.post_submission')
-@patch('codepost_api.helpers.get_assignment_submissions')
+@patch('codePost_api.helpers.post_submission')
+@patch('codePost_api.helpers.get_assignment_submissions')
 def test_upload_submission_with_no_conflicts(mock_get_submissions, mock_post_submission):
 
   # create mock data

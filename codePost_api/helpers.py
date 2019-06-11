@@ -449,7 +449,7 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                         )
 
                     if file_obj != None and file_obj.get("id", None) != None:
-                        added_file_ids.append(file.obj["id"])
+                        added_file_ids.append(file_obj["id"])
 
         else:
 
@@ -477,7 +477,7 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                     )
 
                 if file_obj != None and file_obj.get("id", None) != None:
-                    added_file_ids.append(file.obj["id"])
+                    added_file_ids.append(file_obj["id"])
 
     # Delete files in existing_files but not in newest_files, if instructed to do so
     if mode.value["deleteUnspecifiedFiles"]:

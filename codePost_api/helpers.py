@@ -506,8 +506,8 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
 def get_available_courses(api_key, course_name=None, course_period=None):
     """
     Returns a list of the available courses/terms to which the user, associated with
-    the provided API key, has access to. Optionally, restrict the results to a specific
-    course and/or period.
+    the provided API key, has administrative access to. Optionally, restrict the
+    results to a specific course and/or period.
     """
     auth_headers = {"Authorization": "Token {}".format(api_key)}
 
@@ -515,7 +515,7 @@ def get_available_courses(api_key, course_name=None, course_period=None):
 
     try:
         r = _requests.get(
-            "{}/users/me/".format(BASE_URL),
+            "{}/courses/".format(BASE_URL),
             headers=auth_headers
         )
 
@@ -523,7 +523,7 @@ def get_available_courses(api_key, course_name=None, course_period=None):
             raise RuntimeError("HTTP request returned {}: {}".format(
                 r.status_code, r.content))
 
-        result = r.json().get("courseadminCourses", list())
+        result = r.json()
 
     except Exception as exc:
 

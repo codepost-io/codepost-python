@@ -33,11 +33,9 @@ class TestGetAvailableCourses(object):
         cls.mock_get.stop()
 
     def test_get_available_courses_on_success_without_filter(self):
-        mockObj = {
-          'courseadminCourses' : [
+        mockObj = [
             {'id' : 1, 'name' : 'COS126', 'period' : 'S2019'}
-          ]
-        }
+            ]
 
         self.mock_get.return_value = Mock()
         self.mock_get.return_value.status_code = 200
@@ -45,13 +43,13 @@ class TestGetAvailableCourses(object):
 
         courses = helpers.get_available_courses(TEST_API_KEY)
 
-        assert_equal(mockObj['courseadminCourses'], courses)
+        assert_equal(mockObj, courses)
 
     def test_get_available_courses_on_success_with_filter_results(self):
         course1 = {'id' : 1, 'name' : 'COS126', 'period' : 'S2019'}
-        course2 = {'id' : 1, 'name' : 'COS226', 'period' : 'S2020'}
+        course2 = {'id' : 2, 'name' : 'COS226', 'period' : 'S2020'}
 
-        mockObj = {'courseadminCourses' : [course1, course2]}
+        mockObj = [course1, course2]
 
         self.mock_get.return_value = Mock()
         self.mock_get.return_value.status_code = 200
@@ -72,7 +70,7 @@ class TestGetAvailableCourses(object):
     def test_get_available_courses_on_success_with_no_filter_results(self):
         course1 = {'id' : 1, 'name' : 'COS126', 'period' : 'S2019'}
         course2 = {'id' : 1, 'name' : 'COS226', 'period' : 'S2020'}
-        mockObj = {'courseadminCourses' : [course1, course2]}
+        mockObj = [course1, course2]
 
         self.mock_get.return_value = Mock()
         self.mock_get.return_value.status_code = 200

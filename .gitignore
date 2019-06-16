@@ -28,3 +28,8 @@ __pycache__
 
 # VS Code metadata
 # .vscode
+
+# Jupyter/IPython sandbox
+.ipynb_checkpoints
+.ipynb_checkpoints/*
+sandbox.ipynb

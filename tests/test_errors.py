@@ -145,9 +145,24 @@ class TestServerRuntimeErrors(unittest.TestCase):
 
 @patch("codePost_api.helpers.delete_file")
 @patch("codePost_api.helpers.delete_submission")
-def test_upload_error(mock_delete_submission, mock_delete_file):
+def test_upload_error_with_successful_api_calls(mock_delete_submission, mock_delete_file):
     mock_delete_submission.return_value = None
     mock_delete_file.return_value = None
+
+    obj = errors.UploadError(
+        message="Upload error message.",
+        api_key=TEST_API_KEY,
+        assignment_id=1,
+        submission_id=1,
+        file_ids=[1])
+    
+    obj.force_cleanup()
+
+@patch("codePost_api.helpers.delete_file")
+@patch("codePost_api.helpers.delete_submission")
+def test_upload_error_with_failed_api_calls(mock_delete_submission, mock_delete_file):
+    mock_delete_submission.side_effect = lambda: 1/0 # throw an(y) exception
+    mock_delete_file.side_effect = lambda: 1/0 # throw an(y) exception
 
     obj = errors.UploadError(
         message="Upload error message.",

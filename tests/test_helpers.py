@@ -10,7 +10,7 @@ except ImportError:
 from nose.tools import assert_equal, assert_is_not_none
 
 # codePost_api imports...
-import codePost_api as helpers
+import codePost_api.helpers as helpers
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'

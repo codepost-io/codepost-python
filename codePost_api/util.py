@@ -29,7 +29,7 @@ try:
     from urllib.parse import urljoin
     from urllib.parse import quote as urlquote
     from urllib.parse import urlencode as urlencode
-except ImportError:
+except ImportError: # pragma: no cover
     # Python 2
     from urlparse import urljoin
     from urllib import quote as urlquote

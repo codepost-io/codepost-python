@@ -177,7 +177,7 @@ def validate_api_key(api_key, log_outcome=False, caption=""):
         Helper method to return `False` and possibly log a warning.
         """
         if log_outcome:
-            _logger.warn(
+            _logger.warning(
                 "API_KEY '{:.5}...' {}seems invalid.".format(
                     api_key,
                     caption
@@ -373,7 +373,7 @@ def configure_api_key(api_key=None, override=True):
         
         return API_KEY
     
-    _logger.warn(
+    _logger.warning(
         ("API_KEY could not be detected. "
          "codePost API calls are expected to fail. "
          "You may retrieve your API key from {} "

@@ -68,9 +68,10 @@ def get_available_courses(api_key, course_name=None, course_period=None):
 
         raise RuntimeError(
             """
-            get_available_courses: Unexpected exception while retrieving the list
-            of available courses/terms; this could be related to the API key({:.5})
-            being either unavailable, invalid, or stale:
+            get_available_courses: Unexpected exception while retrieving
+            the list of available courses/terms; this could be related
+            to the API key({:.5}...) being either unavailable, invalid,
+            or stale:
                {}
             """.format(api_key, exc)
         )
@@ -677,7 +678,7 @@ def post_comment(api_key, file, text, pointDelta, startChar, endChar, startLine,
         "endChar" : endChar,
         "startLine" : startLine,
         "endLine" : endLine,
-        "file" : file.get("id"), # from arg
+        "file" : file.get("id", -1) if file else -1, # from arg
     }
 
     if rubricComment is not None:

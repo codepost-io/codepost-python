@@ -14,6 +14,7 @@ from nose.tools import assert_equal, assert_is_not_none
 
 # codePost_api imports...
 import codePost_api.helpers as helpers
+import codePost_api.errors as errors
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'
@@ -25,7 +26,7 @@ TEST_API_KEY = 'TEST_KEY'
 # server errors by throwing a voluntary RuntimeError.
 #############################################################################
 
-class TestRuntimeErrors(unittest.TestCase):
+class TestServerRuntimeErrors(unittest.TestCase):
 
     @classmethod
     def _make_mock_request(cls):
@@ -55,7 +56,11 @@ class TestRuntimeErrors(unittest.TestCase):
             if p_name in cls.kwargs:
                 continue
             
-            if "id" in p_name.lower():
+            if "ids" in p_name.lower():
+                params[p_name] = []
+                continue
+            
+            elif "id" in p_name.lower():
                 params[p_name] = 1
                 continue
             
@@ -131,3 +136,24 @@ class TestRuntimeErrors(unittest.TestCase):
                     self._make_runtime_error_test(method)(self)
             else:
                 self._make_runtime_error_test(method)(self)
+
+#############################################################################
+# Function tested: helpers.get_available_courses
+# Notes:
+#
+#############################################################################
+
+@patch("codePost_api.helpers.delete_file")
+@patch("codePost_api.helpers.delete_submission")
+def test_upload_error(mock_delete_submission, mock_delete_file):
+    mock_delete_submission.return_value = None
+    mock_delete_file.return_value = None
+
+    obj = errors.UploadError(
+        message="Upload error message.",
+        api_key=TEST_API_KEY,
+        assignment_id=1,
+        submission_id=1,
+        file_ids=[1])
+    
+    obj.force_cleanup()

@@ -42,13 +42,13 @@ import requests as _requests
 from yaml import load as _load_yaml
 try:
     from yaml import CLoader as _YamlLoader
-except ImportError:
+except ImportError: # pragma: no cover
     from yaml import Loader as _YamlLoader
 #
 try:
     # Python 3
     from enum import Enum as _Enum
-except ImportError:
+except ImportError: # pragma: no cover
     no_enum = True
 
     # Python 2 fallbacks
@@ -166,20 +166,33 @@ def get_logger(name=None):
 #########################################################################
 
 
+def _is_stringable(obj):
+    try:
+        str(obj)
+    except:
+        return False
+    return True
+
 def validate_api_key(api_key, log_outcome=False, caption=""):
     # type: (str) -> bool
     """
     Checks whether a provided codePost API key is valid.
     """
     
+    # Used for reporting
+    api_key_str = "N/A"
+    if _is_stringable(api_key):
+        api_key_str = str(api_key)
+
     def invalid_api_key():
         """
         Helper method to return `False` and possibly log a warning.
         """
         if log_outcome:
+
             _logger.warning(
                 "API_KEY '{:.5}...' {}seems invalid.".format(
-                    api_key,
+                    api_key_str,
                     caption
                 ))
         return False
@@ -228,7 +241,7 @@ def validate_api_key(api_key, log_outcome=False, caption=""):
     except:
         _logger.debug(
             "Unexpected error while validating an API_KEY '{:.5}...'.".format(
-                api_key
+                api_key_str
             ))
     
     return invalid_api_key()
@@ -252,13 +265,18 @@ def configure_api_key(api_key=None, override=True):
     """
     global API_KEY, _API_KEY_OVERRIDE
     
+    # Used for reporting
+    api_key_str = "N/A"
+    if _is_stringable(api_key):
+        api_key_str = str(api_key)
+
     # Override API_KEY by argument
 
     if override and api_key != None and api_key != "":
 
         _logger.debug(
             "API_KEY '{:.5}...' provided as override.".format(
-                api_key
+                api_key_str
             ))
 
         # Check validity of provided override key  
@@ -358,11 +376,15 @@ def configure_api_key(api_key=None, override=True):
         
         API_KEY = config.get("api_key")
 
+        API_KEY_STR = "N/A"
+        if _is_stringable(API_KEY):
+            API_KEY_STR = str(API_KEY)
+
         _logger.debug(
             ("API_KEY detected in configuration file ({}): " +
             "'{:.5}...'").format(
                 DEFAULT_API_KEY_VARNAME,
-                API_KEY
+                API_KEY_STR
             ))
         
         # Check validity of environment provided key  
@@ -390,7 +412,7 @@ class DocEnum(_Enum):
         # type: (str, str) -> None
         try:
             super().__init__()
-        except TypeError:
+        except TypeError: # pragma: no cover
             # Python 2: the super() syntax was only introduced in Python 3.x
             super(DocEnum, self).__init__()
         self._value_ = value

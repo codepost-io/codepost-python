@@ -12,6 +12,7 @@ PyYAML = "*"
 
 [packages]
 nose = "*"
+nose2 = "*"
 requests = "*"
 PyYAML = "*"
 urllib3 = "*"

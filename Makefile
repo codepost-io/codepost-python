@@ -92,6 +92,7 @@ publish: install
 clean:
 	@rm -Rf *.egg *.egg-info .cache .coverage .tox build dist docs/build htmlcov
 	@find . -depth -type d -name __pycache__ -exec rm -Rf {} \;
+	@find . -type d -name '.pytest_cache' | xargs rm -Rf
 	@find . -type f -name '*.pyc' -delete
 
 .PHONY: default install reset check publish clean # test tox readme docs

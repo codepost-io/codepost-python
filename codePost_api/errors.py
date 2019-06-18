@@ -29,7 +29,7 @@ _logger = _util.get_logger(__name__)
 
 class UploadError(RuntimeError):
 
-    def __init__(self, message,
+    def __init__(self, message="",
         api_key=None, assignment_id=None, submission_id=None,
         file_ids=None, *args, **kwargs):
 

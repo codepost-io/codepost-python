@@ -9,6 +9,8 @@ pytest-cov = ">=2.6"
 coveralls = "*"
 tox = "*"
 PyYAML = "*"
+pylint = "*"
+pytest-subtests = "*"
 
 [packages]
 nose = "*"
@@ -16,7 +18,7 @@ nose2 = "*"
 requests = "*"
 PyYAML = "*"
 urllib3 = "*"
-codePost_api = {path = ".", editable = true}
+codePost_api = {path = ".",editable = true}
 
 [requires]
 python_version = "3.7"

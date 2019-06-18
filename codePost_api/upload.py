@@ -345,7 +345,12 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             """)
 
     # Check whether students will need an update.
-    if not mode.value["resolveStudents"]:
+    if not mode.value["resolveStudents"]: # pragma: no cover
+        # NOTE: It turns out that, as of 2019-06-18, with our current
+        # 5 different modes, this block is never executed because:
+        #     For all mode:
+        #         mode["updateIfExists"] === mode["resolveStudents"]
+        # This piece of code is left in case future modes are created.
         if len(existing_submissions) > 1 or set(students) != set(existing_submissions[0]["students"]):
             raise _errors.UploadError(
                 """

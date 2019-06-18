@@ -321,7 +321,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                 files=files
             )
         except _errors.UploadError as e:
-            if not mode["allowPartial"]:
+            if not mode.value["allowPartial"]:
                 e.force_cleanup()
             raise e
         # END CASE 1
@@ -386,7 +386,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
                 files=files
             )
         except _errors.UploadError as e:
-            if not mode["allowPartial"]:
+            if not mode.value["allowPartial"]:
                 e.force_cleanup()
             raise e
 
@@ -414,7 +414,7 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
             mode=mode
         )
     except _errors.UploadError as e:
-        if not mode["allowPartial"]:
+        if not mode.value["allowPartial"]:
             e.force_cleanup()
         raise e
 

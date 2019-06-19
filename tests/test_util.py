@@ -145,7 +145,15 @@ def test_configure_api_key_by_yaml_file(
     mock_env.start()
     del os.environ[util.DEFAULT_API_KEY_VARNAME]
 
-    with patch("builtins.open", mock_open(read_data="")) as mock_file:
+    # Figure out the name of the open builtin
+    # https://stackoverflow.com/a/34677735/408734
+    builtins_name = "builtins"
+    if (sys.version_info < (3, 0)):
+        # Python 2
+        builtins_name = "__builtin__"
+    open_name = "{}.open".format(builtins_name)
+
+    with patch(open_name, mock_open(read_data="")) as mock_file:
         _assert.assertEqual(
             TEST_API_KEY,
             util.configure_api_key(
@@ -176,7 +184,15 @@ def test_configure_api_key_by_yaml_file_empty(
     mock_env.start()
     del os.environ[util.DEFAULT_API_KEY_VARNAME]
 
-    with patch("builtins.open", mock_open(read_data="")) as mock_file:
+    # Figure out the name of the open builtin
+    # https://stackoverflow.com/a/34677735/408734
+    builtins_name = "builtins"
+    if (sys.version_info < (3, 0)):
+        # Python 2
+        builtins_name = "__builtin__"
+    open_name = "{}.open".format(builtins_name)
+
+    with patch(open_name, mock_open(read_data="")) as mock_file:
         _assert.assertIsNone(
             util.configure_api_key(
                 api_key=None,

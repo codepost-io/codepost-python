@@ -13,8 +13,6 @@ pylint = "*"
 pytest-subtests = "*"
 
 [packages]
-nose = "*"
-nose2 = "*"
 requests = "*"
 PyYAML = "*"
 urllib3 = "*"

@@ -33,3 +33,7 @@ __pycache__
 .ipynb_checkpoints
 .ipynb_checkpoints/*
 sandbox.ipynb
+sandbox*.ipynb
+
+# Sandbox tests
+tests/*sandbox*.py

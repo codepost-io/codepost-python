@@ -9,9 +9,6 @@ except ImportError:
     # python 2, requires dependency
     from mock import Mock, patch
 
-# Third-party imports...
-from nose.tools import assert_equal, assert_is_not_none
-
 # codePost_api imports...
 import codePost_api.helpers as helpers
 import codePost_api.errors as errors

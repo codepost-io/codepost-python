@@ -187,6 +187,13 @@ class AbstractManyMocksTestCase(unittest.TestCase):
         # Extract and combine the outcomes
         outcomes = list(map(lambda item: item.get("outcomes"), values))
         outcome_tuples_generator = itertools.product(*outcomes)
+
+        # In Python 3.x, `outcome_tuples_generator` is a generator,
+        # but in Python 2.7, it is a list. So we need to convert it
+        # to a generator.
+        if (sys.version_info < (3, 0)):
+            # Python 2
+            outcome_tuples_generator = (x for x in outcome_tuples_generator)
         
         # Generator class
         def _generator():
@@ -194,7 +201,12 @@ class AbstractManyMocksTestCase(unittest.TestCase):
             while True:
                 current = None
                 try:
-                    current = outcome_tuples_generator.__next__()
+                    if (sys.version_info >= (3, 0)):
+                        # Python 3
+                        current = outcome_tuples_generator.__next__()
+                    else:
+                        # Python 2
+                        current = outcome_tuples_generator.next()
                 except StopIteration:
                     break
                 
@@ -208,6 +220,13 @@ class AbstractManyMocksTestCase(unittest.TestCase):
     def subTestOutcome(self, outcome_tuple=None, **kwargs):
         
         _patches = []
+
+        # Python 2 patching
+        if (sys.version_info < (3,0)) and not hasattr(self, "subTest"):
+            @contextlib.contextmanager
+            def _aux(*args, **kwargs):
+                yield
+            setattr(self, "subTest", _aux)
 
         # Hand-off to the subtest
         with self.subTest(outcome=outcome_tuple, **kwargs):
@@ -521,13 +540,152 @@ class AbstractFilediffTestCase(AbstractManyMocksTestCase):
     _methods_with_impact = [
         {
             "name": "delete_file",
-            "outcomes": [ True, ]#errors.UploadError ]
+            "outcomes": [ True, errors.UploadError ]
         },
         {
             "name": "post_file",
-            "outcomes": [ { "id": 0 }, ]# errors.UploadError ]
+            "outcomes": [ { "id": 0 }, errors.UploadError ]
         },
     ]
 
 
+
+class FilediffTestCase(AbstractFilediffTestCase):
+
+    
+    # CASE 1: Conflicts => update file
+    @patch("codePost_api.upload._get_file")
+    def test_with_updated_file(self, mock_gf):
+        # create mock data
+        file_id1 = 7709
+        file_id2 = 7711
+
+        submission1 = { "id" : 1, "files": [file_id1] }
+
+        file1  = { "id": file_id1, "code": "t1", "name": "t1.txt", "extension": "txt", }
+        file1m = { "id": file_id1, "code": "t1m", "name": "t1.txt", "extension": "txt", }
+        file2  = { "id": file_id2, "code": "t2", "name": "t2.txt", "extension": "txt", }
+
+        def _mock_gf_method(file_id, *args, **kwargs):
+            if file_id == file_id1:
+                return file1
+            return file2
+        mock_gf.side_effect = _mock_gf_method
+
+        # For each of the multiple paths:
+        for outcome_tuple in self.mock_outcome_generator():
+            
+            # For all possible upload modes
+            for mode in list(upload.UploadModes.__members__.values()):
+
+                # Create a subtest
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
+                    # The method that will run this test
+                    def _run_test():
+                        return upload._upload_submission_filediff(
+                            api_key=TEST_API_KEY,
+                            submission_info=submission1,
+                            newest_files=[file1m],
+                            mode=mode
+                        )
+                    
+                    # Running the test with correct outcome
+                    if mode.value["updateExistingFiles"]:
+                        df_outcome = outcome_tuple["delete_file"]
+                        pf_outcome = outcome_tuple["post_file"]
+                        if is_exception(pf_outcome):
+                            self.assertRaises(pf_outcome, _run_test)
+                        elif is_exception(df_outcome):
+                            self.assertRaises(df_outcome, _run_test)
+                        else:
+                            self.assertTrue(_run_test())
+                    else:
+                        self.assertFalse(_run_test())
+    
+    # CASE 2: No conflicts => add file
+    @patch("codePost_api.upload._get_file")
+    def test_add_file(self, mock_gf):
+        # create mock data
+        file_id1 = 7709
+        submission1 = { "id" : 1, "files": [] }
+        file1  = { "id": file_id1, "code": "t1", "name": "t1.txt", "extension": "txt", }
+
+        mock_gf.return_value = []
+
+        # For each of the multiple paths:
+        for outcome_tuple in self.mock_outcome_generator():
+            
+            # For all possible upload modes
+            for mode in list(upload.UploadModes.__members__.values()):
+
+                # Create a subtest
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
+                    # The method that will run this test
+                    def _run_test():
+                        return upload._upload_submission_filediff(
+                            api_key=TEST_API_KEY,
+                            submission_info=submission1,
+                            newest_files=[file1],
+                            mode=mode
+                        )
+                    
+                    # Running the test with correct outcome
+                    if mode.value["addFiles"]:
+                        pf_outcome = outcome_tuple["post_file"]
+                        if is_exception(pf_outcome):
+                            self.assertRaises(pf_outcome, _run_test)
+                        else:
+                            self.assertTrue(_run_test())
+                    else:
+                        self.assertFalse(_run_test())
+    
+    # CASE 2: No conflicts => add file
+    @patch("codePost_api.upload._get_file")
+    def test_delete_unspecified(self, mock_gf):
+        # create mock data
+        file_id1 = 7709
+        file_id2 = 7711
+
+        submission1 = { "id" : 1, "files": [file_id2] }
+
+        file1  = { "id": file_id1, "code": "t1", "name": "t1.txt", "extension": "txt", }
+        file1m = { "id": file_id1, "code": "t1m", "name": "t1.txt", "extension": "txt", }
+        file2  = { "id": file_id2, "code": "t2", "name": "t2.txt", "extension": "txt", }
+
+        def _mock_gf_method(file_id, *args, **kwargs):
+            if file_id == file_id1:
+                return file1
+            return file2
+        mock_gf.side_effect = _mock_gf_method
+
+        # For each of the multiple paths:
+        for outcome_tuple in self.mock_outcome_generator():
+            
+            # For all possible upload modes
+            for mode in list(upload.UploadModes.__members__.values()):
+
+                # Create a subtest
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
+                    # The method that will run this test
+                    def _run_test():
+                        return upload._upload_submission_filediff(
+                            api_key=TEST_API_KEY,
+                            submission_info=submission1,
+                            newest_files=[file1],
+                            mode=mode
+                        )
+                    
+                    # Running tests
+                    if mode.value["addFiles"] or mode.value["deleteUnspecifiedFiles"]:
+                        pf_outcome = outcome_tuple["post_file"]
+                        df_outcome = outcome_tuple["delete_file"]
+                        if is_exception(pf_outcome) and mode.value["addFiles"]:
+                            self.assertRaises(pf_outcome, _run_test)
+                        elif is_exception(df_outcome) and mode.value["deleteUnspecifiedFiles"]:
+                            self.assertRaises(df_outcome, _run_test)
+                        else:
+                            self.assertTrue(_run_test())
+                    
+                    else:
+                        self.assertFalse(_run_test())
 

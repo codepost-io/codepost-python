@@ -6,14 +6,17 @@ except ImportError:
     # python 2, requires dependency
     from mock import Mock, patch
 
-# Third-party imports...
-from nose.tools import assert_equal, assert_is_not_none
-
 # codePost_api imports...
-import codePost_api.helpers as helpers
+from codePost_api import helpers
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'
+
+class _AssertHelper(unittest.TestCase):
+    def runTest(self):
+        pass
+
+_assert = _AssertHelper()
 
 ##############################################################################################
 
@@ -43,7 +46,7 @@ class TestGetAvailableCourses(object):
 
         courses = helpers.get_available_courses(TEST_API_KEY)
 
-        assert_equal(mockObj, courses)
+        _assert.assertEqual(mockObj, courses)
 
     def test_get_available_courses_on_success_with_filter_results(self):
         course1 = {'id' : 1, 'name' : 'COS126', 'period' : 'S2019'}
@@ -57,15 +60,15 @@ class TestGetAvailableCourses(object):
 
         # test filtering by name
         courses = helpers.get_available_courses(TEST_API_KEY, course_name='COS126')
-        assert_equal([course1], courses)
+        _assert.assertEqual([course1], courses)
 
         # test filtering by period
         courses = helpers.get_available_courses(TEST_API_KEY, course_period='S2020')
-        assert_equal([course2], courses)
+        _assert.assertEqual([course2], courses)
 
         # test filtering by both name and period
         courses = helpers.get_available_courses(TEST_API_KEY, course_name='COS226', course_period='S2020')
-        assert_equal([course2], courses)
+        _assert.assertEqual([course2], courses)
 
     def test_get_available_courses_on_success_with_no_filter_results(self):
         course1 = {'id' : 1, 'name' : 'COS126', 'period' : 'S2019'}
@@ -78,15 +81,15 @@ class TestGetAvailableCourses(object):
 
         # test filtering by name
         courses = helpers.get_available_courses(TEST_API_KEY, course_name='COS120')
-        assert_equal([], courses)
+        _assert.assertEqual([], courses)
 
         # test filtering by period
         courses = helpers.get_available_courses(TEST_API_KEY, course_period='S2000')
-        assert_equal([], courses)
+        _assert.assertEqual([], courses)
 
         # test filtering by both name and period
         courses = helpers.get_available_courses(TEST_API_KEY, course_name='COS326', course_period='S2020')
-        assert_equal([], courses)
+        _assert.assertEqual([], courses)
 
 #############################################################################
 # Function tested: helpers.get_course_roster_by_id
@@ -101,7 +104,7 @@ def test_get_course_roster_by_id(mock_get):
     mock_get.return_value.json.return_value = roster
 
     response = helpers.get_course_roster_by_id(TEST_API_KEY, roster['id'])
-    assert_equal(roster, response)
+    _assert.assertEqual(roster, response)
 
 #############################################################################
 # Function tested: helpers.get_course_roster_by_name
@@ -121,7 +124,7 @@ def test_get_course_roster_by_name(mock_get_available_courses, mock_get_course_r
     mock_get_course_roster_by_id.return_value = roster
 
     response = helpers.get_course_roster_by_name(TEST_API_KEY, 'COS126', 'S2019')
-    assert_equal(output, response)
+    _assert.assertEqual(output, response)
 
 #############################################################################
 # Function tested: helpers.get_assignment_info_by_id
@@ -136,7 +139,7 @@ def test_get_assignment_info_by_id(mock_get):
     mock_get.return_value.json.return_value = assignment
 
     response = helpers.get_course_roster_by_id(TEST_API_KEY, assignment['id'])
-    assert_equal(assignment, response)
+    _assert.assertEqual(assignment, response)
 
 #############################################################################
 # Function tested: helpers.get_assignment_info_by_name
@@ -161,7 +164,7 @@ def test_get_assignment_info_by_name(mock_get_available_courses, mock_get_assign
     mock_get_assignment_info_by_id.side_effect = side_effect
     response = helpers.get_assignment_info_by_name(TEST_API_KEY, 'COS226', 'S2019', 'assignment-4')
 
-    assert_equal({'id': 4, 'name' : 'assignment-4'}, response)
+    _assert.assertEqual({'id': 4, 'name' : 'assignment-4'}, response)
 
 #############################################################################
 # Function tested: helpers.get_assignment_submissions
@@ -187,7 +190,7 @@ def test_get_assignment_submissions(mock_get):
     mock_get.return_value.json.return_value = [submission1,submission2]
 
     response = helpers.get_assignment_submissions(TEST_API_KEY, 1)
-    assert_equal([submission1,submission2], response)
+    _assert.assertEqual([submission1,submission2], response)
 
 #############################################################################
 # Function tested: helpers.get_file
@@ -210,7 +213,7 @@ def test_get_file(mock_get):
     mock_get.return_value.json.return_value = file
 
     response = helpers.get_file(TEST_API_KEY, file['id'])
-    assert_equal(file, response)
+    _assert.assertEqual(file, response)
 
 #############################################################################
 # Function tested: helpers.set_submission_grader
@@ -230,7 +233,7 @@ def test_set_submission_grader(mock_patch):
     mock_patch.return_value.json.return_value = submission1
 
     response = helpers.set_submission_grader(TEST_API_KEY, submission1['id'], None)
-    assert_equal(True, response)
+    _assert.assertEqual(True, response)
 
 #############################################################################
 # Function tested: helpers.set_submission_grader
@@ -249,7 +252,7 @@ def test_unclaim_submission(mock_patch):
     mock_patch.return_value.json.return_value = submission1
 
     response = helpers.unclaim_submission(TEST_API_KEY, submission1['id'])
-    assert_equal(True, response)
+    _assert.assertEqual(True, response)
 
 #############################################################################
 # Function tested: helpers.remove_comments
@@ -271,7 +274,7 @@ def test_remove_comments(mock_get, mock_delete):
     mock_delete.return_value.status_code = 204
 
     response = helpers.remove_comments(TEST_API_KEY, file_id=file1['id'])
-    assert_equal(True, response)
+    _assert.assertEqual(True, response)
 
 #############################################################################
 # Function tested: helpers.delete_submission
@@ -282,7 +285,7 @@ def test_remove_comments(mock_get, mock_delete):
 def test_delete_submission(mock_delete):
     mock_delete.return_value.status_code = 204
     response = helpers.delete_submission(TEST_API_KEY, 1)
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
 #############################################################################
 # Function tested: helpers.delete_file
@@ -293,7 +296,7 @@ def test_delete_submission(mock_delete):
 def test_delete_file(mock_delete):
     mock_delete.return_value.status_code = 204
     response = helpers.delete_file(TEST_API_KEY, 1)
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
 #############################################################################
 # Function tested: helpers.post_file
@@ -304,7 +307,7 @@ def test_delete_file(mock_delete):
 def test_post_file(mock_post):
     mock_post.return_value.status_code = 201
     response = helpers.post_file(TEST_API_KEY, 1, 'test.txt', 'hello', 'txt')
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
 #############################################################################
 # Function tested: helpers.post_submission
@@ -316,7 +319,7 @@ def test_post_submission(mock_post):
     file = {'name' : 'test.txt', 'code' : 'hello', 'extension' : 'txt'}
     mock_post.return_value.status_code = 201
     response = helpers.post_submission(TEST_API_KEY, 1, ['test.txt'], [file])
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
 #############################################################################
 # Function tested: helpers.post_comment
@@ -328,7 +331,7 @@ def test_post_comment(mock_post):
     file = {'name' : 'test.txt', 'code' : 'hello', 'extension' : 'txt', 'id' : 1}
     mock_post.return_value.status_code = 201
     response = helpers.post_comment(TEST_API_KEY, file, 'test', 1, 0, 1, 0, 0)
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
 #############################################################################
 # Function tested: helpers.set_submission_students
@@ -339,7 +342,7 @@ def test_post_comment(mock_post):
 def test_set_submission_students(mock_patch):
     mock_patch.return_value.status_code = 200
     response = helpers.set_submission_students(TEST_API_KEY, 1, ['student1@codepost.io'])
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
 #############################################################################
 # Function tested: helpers.remove_students_from_submission
@@ -368,11 +371,11 @@ def test_remove_students_from_submission(mock_patch, mock_delete):
 
     # remove one student from the submission
     response = helpers.remove_students_from_submission(TEST_API_KEY, submission1, ['student1@codepost.io'])
-    assert_is_not_none(response)
+    _assert.assertIsNotNone(response)
 
     # remove the last remaining student from submission => should trigger a delete
     response = helpers.remove_students_from_submission(TEST_API_KEY, submission2, ['student2@codepost.io'])
-    assert_equal(response, None) # response from mock_delete
+    _assert.assertEqual(response, None) # response from mock_delete
 
 #############################################################################
 # Function tested: helpers.get_course_grades
@@ -422,4 +425,4 @@ def test_get_course_grades(mock_roster, mock_assignment, mock_submissions):
       }
     }
 
-    assert_equal(answer, response)
+    _assert.assertEqual(answer, response)

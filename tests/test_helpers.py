@@ -1,4 +1,5 @@
 # Standard library imports...
+import unittest
 try:
     # python 3
     from unittest.mock import Mock, patch

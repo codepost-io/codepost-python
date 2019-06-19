@@ -8,7 +8,9 @@ except ImportError:
     from mock import Mock, patch
 
 # codePost_api imports...
+from codePost_api import errors
 from codePost_api import helpers
+from codePost_api import upload
 
 # test constants
 TEST_API_KEY = 'TEST_KEY'
@@ -127,6 +129,37 @@ def test_get_course_roster_by_name(mock_get_available_courses, mock_get_course_r
     response = helpers.get_course_roster_by_name(TEST_API_KEY, 'COS126', 'S2019')
     _assert.assertEqual(output, response)
 
+@patch('codePost_api.helpers.get_available_courses')
+def test_get_course_roster_by_name_no_courses(mock_get_available_courses):
+
+    # mock get_available_courses
+    mock_get_available_courses.return_value = []
+
+    _assert.assertRaises(
+        RuntimeError,
+        lambda:
+            helpers.get_course_roster_by_name(
+                api_key=TEST_API_KEY,
+                course_name="COS226",
+                course_period="S2019")
+    )
+
+@patch('codePost_api.helpers.get_available_courses')
+def test_get_course_roster_by_name_course_conflict(mock_get_available_courses):
+
+    # mock get_available_courses
+    course1 = {'id' : 1, 'name' : 'COS126', 'period' : 'S2019', 'assignments': [1,2]}
+    course2 = {'id' : 2, 'name' : 'COS226', 'period' : 'S2019', 'assignments': [3,4,5]}
+    mock_get_available_courses.return_value = [course1, course2]
+
+    _assert.assertRaises(
+        RuntimeError,
+        lambda:
+            helpers.get_course_roster_by_name(
+                api_key=TEST_API_KEY,
+                course_name="COS226",
+                course_period="S2019")
+    )
 #############################################################################
 # Function tested: helpers.get_assignment_info_by_id
 # Notes:
@@ -166,6 +199,40 @@ def test_get_assignment_info_by_name(mock_get_available_courses, mock_get_assign
     response = helpers.get_assignment_info_by_name(TEST_API_KEY, 'COS226', 'S2019', 'assignment-4')
 
     _assert.assertEqual({'id': 4, 'name' : 'assignment-4'}, response)
+
+@patch('codePost_api.helpers.get_available_courses')
+def test_get_assignment_info_by_name_course_conflict(mock_get_available_courses):
+
+    # mock get_available_courses
+    course1 = {"id" : 1, "name" : "COS126", "period" : "S2019", "assignments": [1,2]}
+    course2 = {"id" : 2, "name" : "COS226", "period" : "S2019", "assignments": [3,4,5]}
+    mock_get_available_courses.return_value = [course1, course2]
+
+    _assert.assertRaises(
+        RuntimeError,
+        lambda:
+            helpers.get_assignment_info_by_name(
+                api_key=TEST_API_KEY,
+                course_name="COS226",
+                course_period="S2019",
+                assignment_name="test-assignment")
+    )
+
+@patch('codePost_api.helpers.get_available_courses')
+def test_get_assignment_info_by_name_no_course(mock_get_available_courses):
+
+    # mock get_available_courses
+    mock_get_available_courses.return_value = []
+
+    _assert.assertRaises(
+        RuntimeError,
+        lambda:
+            helpers.get_assignment_info_by_name(
+                api_key=TEST_API_KEY,
+                course_name='COS226',
+                course_period='S2019',
+                assignment_name="test-assignment")
+    )
 
 #############################################################################
 # Function tested: helpers.get_assignment_submissions
@@ -377,6 +444,25 @@ def test_remove_students_from_submission(mock_patch, mock_delete):
     # remove the last remaining student from submission => should trigger a delete
     response = helpers.remove_students_from_submission(TEST_API_KEY, submission2, ['student2@codepost.io'])
     _assert.assertEqual(response, None) # response from mock_delete
+
+
+
+#############################################################################
+# Function tested: _submission_list_is_unclaimed
+# Notes:
+#
+#############################################################################
+
+def test_submission_list_is_unclaimed():
+    grader = "grader1@test.codepost.io"
+    submission_claimed = { "id": 7701, "grader": grader }
+    submission_unclaimed = { "id": 7701, "grader": None }
+
+    _assert.assertTrue(
+        helpers._submission_list_is_unclaimed([submission_unclaimed]))
+
+    _assert.assertFalse(
+        helpers._submission_list_is_unclaimed([submission_claimed]))
 
 #############################################################################
 # Function tested: helpers.get_course_grades

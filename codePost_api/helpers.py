@@ -213,17 +213,17 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
     if len(courses) == 0:
         raise RuntimeError(
             """
-            get_assignment_info: Either no course with the specified course({})
-            and period({}) exists, or the provided API key({:.5}...) does not have
-            access to it.
+            get_assignment_info_by_name: Either no course with the
+            specified course({}) and period({}) exists, or the provided
+            API key({:.5}...) does not have access to it.
             """.format(course_name, course_period, api_key)
         )
 
     elif len(courses) > 1:
         raise RuntimeError(
             """
-            get_assignment_info: Request the provided course name({}) and
-            period({}) resulted in more than one result({}).
+            get_assignment_info_by_name: Request the provided course
+            name({}) and period({}) resulted in more than one result({}).
             """.format(course_name, course_period, len(courses))
         )
 
@@ -412,8 +412,6 @@ def set_submission_grader(api_key, submission_id, grader):
                {}
             """.format(submission_id, grader, exc)
         )
-
-    return False
 
 
 def unclaim_submission(api_key, submission_id):

@@ -184,6 +184,12 @@ def _is_stringable(obj):
         return False
     return True
 
+def _robust_str(obj, default="N/A"):
+    obj_str = default
+    if _is_stringable(obj):
+        obj_str = str(obj)
+    return obj_str
+
 def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
     # type: (str) -> bool
     """
@@ -225,7 +231,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
     if api_key in _checked_api_keys:
         if refresh:
             if log_outcome:
-                _logger.info(
+                _logger.debug(
                     "API_KEY '{:.5}...' found in cache => PURGING".format(
                     api_key_str,
                     caption
@@ -235,7 +241,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 
         else:
             if log_outcome:
-                _logger.info(
+                _logger.debug(
                     "API_KEY '{:.5}...' {}found in cache.".format(
                     api_key_str,
                     caption
@@ -492,7 +498,8 @@ class api_key_decorator(object):
         self._api_key_override = api_key_override
 
     def __call__(self, target_function):
-
+        
+        @_functools.wraps(target_function)
         def _wrapper(*args, **kwargs):
             global _checked_api_keys
             

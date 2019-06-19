@@ -66,7 +66,6 @@ def get_available_courses(course_name=None, course_period=None, api_key=None):
         result = r.json()
 
     except Exception as exc:
-
         raise RuntimeError(
             """
             get_available_courses: Unexpected exception while retrieving
@@ -74,7 +73,7 @@ def get_available_courses(course_name=None, course_period=None, api_key=None):
             to the API key({:.5}...) being either unavailable, invalid,
             or stale:
                {}
-            """.format(api_key, exc)
+            """.format(_util._robust_str(api_key), exc)
         )
 
     # Optionally filter according to the `course_name` parameter
@@ -90,6 +89,7 @@ def get_available_courses(course_name=None, course_period=None, api_key=None):
     return list(result)
 
 
+@_util.api_key_decorator()
 def get_course_roster_by_id(course_id, api_key=None):
     """
     Returns the course roster, given the course's ID. The course ID
@@ -114,12 +114,14 @@ def get_course_roster_by_id(course_id, api_key=None):
     except Exception as exc:
         raise RuntimeError(
             """
-            get_course_roster_by_id: Unexpected exception while retrieving the
-            course roster from the provided course id({: d}):
+            get_course_roster_by_id: Unexpected exception while
+            retrieving the course roster from the provided course
+            id ({: d}):
                {}
             """.format(course_id, exc)
         )
 
+@_util.api_key_decorator()
 def get_course_roster_by_name(course_name, course_period, api_key=None):
     """
     Returns the course information and roster for a course, given its
@@ -138,7 +140,7 @@ def get_course_roster_by_name(course_name, course_period, api_key=None):
             ("get_course_roster_by_name: No course '{course_name}_{course_name}' "
              "is available, or codePost API key '{api_key:.5}...' is invalid or "
              "does not have access to it.").format(
-                 api_key=api_key,
+                 api_key=_util._robust_str(api_key),
                  course_name=course_name,
                  course_period=course_period,
             )
@@ -168,6 +170,7 @@ def get_course_roster_by_name(course_name, course_period, api_key=None):
 
     return course_info
 
+@_util.api_key_decorator()
 def get_assignment_info_by_id(assignment_id, api_key=None):
     """
     Returns the assignment information dictionary, given the assignment's ID.
@@ -190,11 +193,12 @@ def get_assignment_info_by_id(assignment_id, api_key=None):
         raise RuntimeError(
             """
             get_assignment_info_by_id: Unexpected exception while retrieving the
-            assignment info from the provided id({: d}):
+            assignment info from the provided id ({: d}):
                {}
             """.format(assignment_id, exc)
         )
 
+@_util.api_key_decorator()
 def get_assignment_info_by_name(course_name, course_period, assignment_name, api_key=None):
     """
     Returns the assignment information dictionary, given a(course name, course period,
@@ -217,7 +221,8 @@ def get_assignment_info_by_name(course_name, course_period, assignment_name, api
             get_assignment_info_by_name: Either no course with the
             specified course({}) and period({}) exists, or the provided
             API key({:.5}...) does not have access to it.
-            """.format(course_name, course_period, api_key)
+            """.format(course_name, course_period,
+                _util._robust_str(api_key))
         )
 
     elif len(courses) > 1:
@@ -260,6 +265,7 @@ def get_assignment_info_by_name(course_name, course_period, assignment_name, api
     return selected_assignment
 
 
+@_util.api_key_decorator()
 def get_assignment_submissions(assignment_id, student=None, grader=None, api_key=None):
     """
     Returns the list of submissions of an assignment, provided an assignment ID
@@ -321,6 +327,7 @@ def get_assignment_submissions(assignment_id, student=None, grader=None, api_key
 
     return result
 
+@_util.api_key_decorator()
 def get_submission_by_id(submission_id, api_key=None):
     """
     Returns the submission information dictionary, given the submission's ID.
@@ -348,6 +355,7 @@ def get_submission_by_id(submission_id, api_key=None):
             """.format(submission_id, exc)
         )
 
+@_util.api_key_decorator()
 def get_file(file_id, api_key=None):
     """
     Returns the file given its file ID; the file IDs are provided within a
@@ -377,6 +385,7 @@ def get_file(file_id, api_key=None):
         )
 
 
+@_util.api_key_decorator()
 def set_submission_grader(submission_id, grader, api_key=None):
     """
     Changes the grader claimed to a submission with a given submission ID.
@@ -415,6 +424,7 @@ def set_submission_grader(submission_id, grader, api_key=None):
         )
 
 
+@_util.api_key_decorator()
 def unclaim_submission(submission_id, api_key=None):
     """
     Unclaims a submission, given the submission ID. This unsets the associated
@@ -427,6 +437,7 @@ def unclaim_submission(submission_id, api_key=None):
     )
 
 
+@_util.api_key_decorator()
 def remove_comments(submission_id=None, file_id=None, api_key=None):
     """
     Removes all comments either from the submission with the given submission ID
@@ -491,6 +502,7 @@ def remove_comments(submission_id=None, file_id=None, api_key=None):
     return (total_comments == deleted_comments)
 
 
+@_util.api_key_decorator()
 def delete_submission(submission_id, api_key=None):
     """
     Deletes the submission with the given submission ID; raises an exception
@@ -520,6 +532,7 @@ def delete_submission(submission_id, api_key=None):
         )
 
 
+@_util.api_key_decorator()
 def delete_file(file_id, api_key=None):
     """
     Deletes the file with the given file ID; raises an exception
@@ -549,6 +562,7 @@ def delete_file(file_id, api_key=None):
         )
 
 
+@_util.api_key_decorator()
 def post_file(submission_id, filename, content, extension, api_key=None):
     """
     Uploads a file to a submission.
@@ -589,6 +603,7 @@ def post_file(submission_id, filename, content, extension, api_key=None):
         )
 
 
+@_util.api_key_decorator()
 def post_submission(assignment_id, students, files, api_key=None):
     """
     Uploads a submission, give the assignment's ID, and a dictionary containing
@@ -663,6 +678,7 @@ def post_submission(assignment_id, students, files, api_key=None):
 
     return submission
 
+@_util.api_key_decorator()
 def post_comment(file, text, pointDelta, startChar, endChar, startLine, endLine, rubricComment=None, api_key=None):
     """
     Adds comment specified by (startChar, endChar, startLine, endLine) to file
@@ -710,6 +726,7 @@ def post_comment(file, text, pointDelta, startChar, endChar, startLine, endLine,
 
     return comment
 
+@_util.api_key_decorator()
 def set_submission_students(submission_id, students, api_key=None):
     """
     Modifies the students associated with a submission.
@@ -741,6 +758,7 @@ def set_submission_students(submission_id, students, api_key=None):
             """.format(students, submission_id, exc)
         )
 
+@_util.api_key_decorator()
 def remove_students_from_submission(submission_info, students_to_remove, api_key=None):
     """
     Removes students from a submission, and possibly delete the submission if no
@@ -773,6 +791,7 @@ def _submission_list_is_unclaimed(submissions):
             return False
     return True
 
+@_util.api_key_decorator()
 def get_course_grades(course_name, course_period, only_finalized=True, api_key=None):
     """
     Returns a dictionary mapping every student in the specified course

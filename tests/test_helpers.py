@@ -161,12 +161,12 @@ def test_get_course_roster_by_name_course_conflict(mock_get_available_courses):
                 course_period="S2019")
     )
 #############################################################################
-# Function tested: helpers.get_assignment_info_by_id
+# Function tested: helpers.get_assignment_by_id
 # Notes:
 #
 #############################################################################
 @patch('codePost_api.helpers._requests.get')
-def test_get_assignment_info_by_id(mock_get):
+def test_get_assignment_by_id(mock_get):
     assignment = {'id': 1}
 
     mock_get.return_value.status_code = 200
@@ -176,32 +176,32 @@ def test_get_assignment_info_by_id(mock_get):
     _assert.assertEqual(assignment, response)
 
 #############################################################################
-# Function tested: helpers.get_assignment_info_by_name
+# Function tested: helpers.get_assignment_by_name
 # Notes:
 #
 #############################################################################
-@patch('codePost_api.helpers.get_assignment_info_by_id')
+@patch('codePost_api.helpers.get_assignment_by_id')
 @patch('codePost_api.helpers.get_available_courses')
-def test_get_assignment_info_by_name(mock_get_available_courses, mock_get_assignment_info_by_id):
+def test_get_assignment_by_name(mock_get_available_courses, mock_get_assignment_by_id):
 
     # mock get_available_courses
     course2 = {'id' : 2, 'name' : 'COS226', 'period' : 'S2019', 'assignments': [3,4,5]}
     mock_get_available_courses.return_value = [course2]
 
-    # mock get_assignment_info_by_id
+    # mock get_assignment_by_id
     def side_effect(api_key, assignment_id):
         return {
           'id': assignment_id,
           'name': 'assignment-%d' % assignment_id,
         }
 
-    mock_get_assignment_info_by_id.side_effect = side_effect
-    response = helpers.get_assignment_info_by_name('COS226', 'S2019', 'assignment-4', api_key=TEST_API_KEY)
+    mock_get_assignment_by_id.side_effect = side_effect
+    response = helpers.get_assignment_by_name('COS226', 'S2019', 'assignment-4', api_key=TEST_API_KEY)
 
     _assert.assertEqual({'id': 4, 'name' : 'assignment-4'}, response)
 
 @patch('codePost_api.helpers.get_available_courses')
-def test_get_assignment_info_by_name_course_conflict(mock_get_available_courses):
+def test_get_assignment_by_name_course_conflict(mock_get_available_courses):
 
     # mock get_available_courses
     course1 = {"id" : 1, "name" : "COS126", "period" : "S2019", "assignments": [1,2]}
@@ -211,7 +211,7 @@ def test_get_assignment_info_by_name_course_conflict(mock_get_available_courses)
     _assert.assertRaises(
         RuntimeError,
         lambda:
-            helpers.get_assignment_info_by_name(
+            helpers.get_assignment_by_name(
                 api_key=TEST_API_KEY,
                 course_name="COS226",
                 course_period="S2019",
@@ -219,7 +219,7 @@ def test_get_assignment_info_by_name_course_conflict(mock_get_available_courses)
     )
 
 @patch('codePost_api.helpers.get_available_courses')
-def test_get_assignment_info_by_name_no_course(mock_get_available_courses):
+def test_get_assignment_by_name_no_course(mock_get_available_courses):
 
     # mock get_available_courses
     mock_get_available_courses.return_value = []
@@ -227,7 +227,7 @@ def test_get_assignment_info_by_name_no_course(mock_get_available_courses):
     _assert.assertRaises(
         RuntimeError,
         lambda:
-            helpers.get_assignment_info_by_name(
+            helpers.get_assignment_by_name(
                 api_key=TEST_API_KEY,
                 course_name='COS226',
                 course_period='S2019',
@@ -470,7 +470,7 @@ def test_submission_list_is_unclaimed():
 #
 #############################################################################
 @patch('codePost_api.helpers.get_assignment_submissions')
-@patch('codePost_api.helpers.get_assignment_info_by_id')
+@patch('codePost_api.helpers.get_assignment_by_id')
 @patch('codePost_api.helpers.get_course_roster_by_name')
 def test_get_course_grades(mock_roster, mock_assignment, mock_submissions):
     roster = {
@@ -483,7 +483,7 @@ def test_get_course_grades(mock_roster, mock_assignment, mock_submissions):
     mock_roster.return_value.status_code = 200
     mock_roster.return_value = roster
 
-    # mock get_assignment_info_by_id
+    # mock get_assignment_by_id
     def side_effect(api_key, assignment_id):
         return {
           'id': assignment_id,

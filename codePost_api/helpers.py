@@ -171,7 +171,7 @@ def get_course_roster_by_name(course_name, course_period, api_key=None):
     return course_info
 
 @_util.api_key_decorator()
-def get_assignment_info_by_id(assignment_id, api_key=None):
+def get_assignment_by_id(assignment_id, api_key=None):
     """
     Returns the assignment information dictionary, given the assignment's ID.
     """
@@ -192,14 +192,14 @@ def get_assignment_info_by_id(assignment_id, api_key=None):
     except Exception as exc:
         raise RuntimeError(
             """
-            get_assignment_info_by_id: Unexpected exception while retrieving the
+            get_assignment_by_id: Unexpected exception while retrieving the
             assignment info from the provided id ({: d}):
                {}
             """.format(assignment_id, exc)
         )
 
 @_util.api_key_decorator()
-def get_assignment_info_by_name(course_name, course_period, assignment_name, api_key=None):
+def get_assignment_by_name(course_name, course_period, assignment_name, api_key=None):
     """
     Returns the assignment information dictionary, given a(course name, course period,
     assignment name) tuple. This contains, in particular, the ID of the assignment that
@@ -218,7 +218,7 @@ def get_assignment_info_by_name(course_name, course_period, assignment_name, api
     if len(courses) == 0:
         raise RuntimeError(
             """
-            get_assignment_info_by_name: Either no course with the
+            get_assignment_by_name: Either no course with the
             specified course({}) and period({}) exists, or the provided
             API key({:.5}...) does not have access to it.
             """.format(course_name, course_period,
@@ -228,7 +228,7 @@ def get_assignment_info_by_name(course_name, course_period, assignment_name, api
     elif len(courses) > 1:
         raise RuntimeError(
             """
-            get_assignment_info_by_name: Request the provided course
+            get_assignment_by_name: Request the provided course
             name({}) and period({}) resulted in more than one result({}).
             """.format(course_name, course_period, len(courses))
         )
@@ -245,7 +245,7 @@ def get_assignment_info_by_name(course_name, course_period, assignment_name, api
     try:
         for aid in assignments:
 
-            ret = get_assignment_info_by_id(assignment_id=aid, api_key=api_key)
+            ret = get_assignment_by_id(assignment_id=aid, api_key=api_key)
 
             if ret.get("name") == assignment_name:
                 selected_assignment = ret
@@ -255,7 +255,7 @@ def get_assignment_info_by_name(course_name, course_period, assignment_name, api
 
         raise RuntimeError(
             """
-            get_assignment_info_by_name: Unexpected exception while listing the
+            get_assignment_by_name: Unexpected exception while listing the
             available assignments and searching for '{}' in course '{}', period
             '{}':
                {}
@@ -832,11 +832,11 @@ def get_course_grades(course_name, course_period, only_finalized=True, api_key=N
         #  u'points': 20,
         #  u'rubricCategories': [519, 640, 641, 642, 643, 644, 645],
         #  u'sortKey': 1}
-        assignment_info = get_assignment_info_by_id(
+        assignment = get_assignment_by_id(
             api_key=api_key,
             assignment_id=aid)
 
-        assignment_name = assignment_info["name"]
+        assignment_name = assignment["name"]
 
         # Submission object:
         # {u'assignment': 92,

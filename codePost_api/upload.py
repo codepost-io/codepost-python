@@ -176,13 +176,13 @@ DEFAULT_UPLOAD_MODE = UploadModes.CAUTIOUS
 ##########################################################################
 
 
-def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEFAULT_UPLOAD_MODE):
+def _upload_submission_filediff(submission_info, newest_files, mode=DEFAULT_UPLOAD_MODE, api_key=None):
 
     # Retrieve a submission's existing files
     existing_files = {
         file["name"]: file
         for file in [
-            _get_file(api_key=api_key, file_id=file_id)
+            _get_file(file_id=file_id, api_key=api_key)
             for file_id in submission_info["files"]
         ]
     }
@@ -217,15 +217,17 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                         "Replacing contents of {} (note: all comments will be deleted)")
 
                     try:
-                        _delete_file(api_key=api_key,
-                                    file_id=existing_files[file["name"]]["id"])
+                        _delete_file(
+                            file_id=existing_files[file["name"]]["id"],
+                            api_key=api_key,
+                        )
 
                         file_obj = _post_file(
-                            api_key=api_key,
                             submission_id=submission_info["id"],
                             filename=file["name"],
                             content=file["code"],
-                            extension=file["extension"]
+                            extension=file["extension"],
+                            api_key=api_key,
                         )
                     except:
                         raise _errors.UploadError(
@@ -249,20 +251,20 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
 
                 try:
                     file_obj = _post_file(
-                        api_key=api_key,
                         submission_id=submission_info["id"],
                         filename=file["name"],
                         content=file["code"],
-                        extension=file["extension"]
+                        extension=file["extension"],
+                        api_key=api_key,
                     )
                 except:
                     raise _errors.UploadError(
                         message="Unexpected error while adding a file.",
                         # Additional fields
-                        api_key=api_key,
                         assignment_id=submission_info.get("assignment"),
                         submission_id=submission_info.get("id"),
                         file_ids=added_file_ids,
+                        api_key=api_key,
                     )
 
                 if file_obj != None and file_obj.get("id", None) != None:
@@ -277,8 +279,8 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
                         ("Deleting file {}, since it was not specified in the " +
                          "upload and deleteUnspecifiedFiles is True.").format(file))
                 _delete_file(
+                    file_id=existing_files[file]["id"],
                     api_key=api_key,
-                    file_id=existing_files[file]["id"]
                 )
                 submission_was_modified = True
 
@@ -290,7 +292,7 @@ def _upload_submission_filediff(api_key, submission_info, newest_files, mode=DEF
 ##########################################################################
 
 
-def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_MODE):
+def upload_submission(assignment, students, files, mode=DEFAULT_UPLOAD_MODE, api_key=None):
 
     assignment_id = assignment.get("id", 0)
 
@@ -300,9 +302,9 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
 
     for student in students:
         submissions = _get_assignment_submissions(
-            api_key=api_key,
             assignment_id=assignment_id,
-            student=student
+            student=student,
+            api_key=api_key,
         )
 
         for submission in submissions:
@@ -315,10 +317,10 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
         # CASE 1: No existing submission => create a new submission
         try:
             return _post_submission(
-                api_key=api_key,
                 assignment_id=assignment_id,
                 students=students,
-                files=files
+                files=files,
+                api_key=api_key,
             )
         except _errors.UploadError as e:
             if not mode.value["allowPartial"]:
@@ -372,23 +374,23 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
 
         for submission in existing_submissions:
             changed_submission = _remove_students_from_submission(
-                api_key=api_key,
                 submission_info=submission,
-                students_to_remove=students
+                students_to_remove=students,
+                api_key=api_key,
             )
 
             if mode.value["deleteAffectedSubmissions"]:
                 _delete_submission(
+                    submission_id=changed_submission["id"],
                     api_key=api_key,
-                    submission_id=changed_submission["id"]
                 )
 
         try:
             return _post_submission(
-                api_key=api_key,
                 assignment_id=assignment_id,
                 students=students,
-                files=files
+                files=files,
+                api_key=api_key,
             )
         except _errors.UploadError as e:
             if not mode.value["allowPartial"]:
@@ -401,46 +403,55 @@ def upload_submission(api_key, assignment, students, files, mode=DEFAULT_UPLOAD_
     submission = list(existing_submissions.values())[0]
     submission_id = submission["id"]
 
-    # Update the submission students to make sure it is what was specified (if we needed
-    # to make this change, and it was forbidden, this would already have been caught).
+    # Update the submission students to make sure it is what was
+    # specified (if we needed to make this change, and it was forbidden,
+    # this would already have been caught).
+    
     _set_submission_students(
-        api_key=api_key,
         submission_id=submission_id,
-        students=students
+        students=students,
+        api_key=api_key,
     )
 
     # Process the change in files
     submission_was_modified = False
     try:
         submission_was_modified = _upload_submission_filediff(
-            api_key=api_key,
             submission_info=submission,
             newest_files=files,
-            mode=mode
+            mode=mode,
+            api_key=api_key,
         )
     except _errors.UploadError as e:
         if not mode.value["allowPartial"]:
             e.force_cleanup()
         raise e
 
-    # Depending on the outcome of the file changes, proceed with the finishing actions
+    # Depending on the outcome of the file changes, proceed with the
+    # finishing actions
+    
     if submission_was_modified:
 
         if mode.value["removeComments"]:
             _remove_comments(
+                submission_id=submission_id,
                 api_key=api_key,
-                submission_id=submission_id
             )
 
         if mode.value["doUnclaim"]:
             _unclaim_submission(
+                submission_id=submission_id,
                 api_key=api_key,
-                submission_id=submission_id
             )
 
-    # Return updated submission dictionary (equivalent to what post_submission would
-    # return in the above exit paths)
-    submission = _get_submission_by_id(api_key=api_key, submission_id=submission_id)
+    # Return updated submission dictionary (equivalent to what
+    # post_submission would return in the above exit paths)
+    
+    submission = _get_submission_by_id(
+        submission_id=submission_id,
+        api_key=api_key
+    )
+
     return submission
 
 ##########################################################################

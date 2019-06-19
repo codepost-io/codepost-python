@@ -42,7 +42,8 @@ _logger = _util.get_logger(__name__)
 ###########################################################################################
 
 
-def get_available_courses(api_key, course_name=None, course_period=None):
+@_util.api_key_decorator()
+def get_available_courses(course_name=None, course_period=None, api_key=None):
     """
     Returns a list of the available courses/terms to which the user, associated with
     the provided API key, has administrative access to. Optionally, restrict the
@@ -89,7 +90,7 @@ def get_available_courses(api_key, course_name=None, course_period=None):
     return list(result)
 
 
-def get_course_roster_by_id(api_key, course_id):
+def get_course_roster_by_id(course_id, api_key=None):
     """
     Returns the course roster, given the course's ID. The course ID
     can be obtained from `get_available_courses`; alternatively you
@@ -119,7 +120,7 @@ def get_course_roster_by_id(api_key, course_id):
             """.format(course_id, exc)
         )
 
-def get_course_roster_by_name(api_key, course_name, course_period):
+def get_course_roster_by_name(course_name, course_period, api_key=None):
     """
     Returns the course information and roster for a course, given its
     name and period. Will throw an exception if no such course is
@@ -128,9 +129,9 @@ def get_course_roster_by_name(api_key, course_name, course_period):
     """
 
     courses = get_available_courses(
-        api_key=api_key,
         course_name=course_name,
-        course_period=course_period)
+        course_period=course_period,
+        api_key=api_key)
 
     if len(courses) == 0:
         raise RuntimeError(
@@ -156,8 +157,8 @@ def get_course_roster_by_name(api_key, course_name, course_period):
     course_info = courses[0]
 
     course_roster = get_course_roster_by_id(
+        course_id=course_info["id"],
         api_key=api_key,
-        course_id=course_info["id"]
     )
 
     # Combine course info and roster for convenience
@@ -167,7 +168,7 @@ def get_course_roster_by_name(api_key, course_name, course_period):
 
     return course_info
 
-def get_assignment_info_by_id(api_key, assignment_id):
+def get_assignment_info_by_id(assignment_id, api_key=None):
     """
     Returns the assignment information dictionary, given the assignment's ID.
     """
@@ -194,7 +195,7 @@ def get_assignment_info_by_id(api_key, assignment_id):
             """.format(assignment_id, exc)
         )
 
-def get_assignment_info_by_name(api_key, course_name, course_period, assignment_name):
+def get_assignment_info_by_name(course_name, course_period, assignment_name, api_key=None):
     """
     Returns the assignment information dictionary, given a(course name, course period,
     assignment name) tuple. This contains, in particular, the ID of the assignment that
@@ -204,9 +205,9 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
 
     # Retrieve all available courses
     courses = get_available_courses(
-        api_key=api_key,
         course_name=course_name,
-        course_period=course_period
+        course_period=course_period,
+        api_key=api_key,
     )
 
     # Check there is exactly one course
@@ -239,7 +240,7 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
     try:
         for aid in assignments:
 
-            ret = get_assignment_info_by_id(api_key=api_key, assignment_id=aid)
+            ret = get_assignment_info_by_id(assignment_id=aid, api_key=api_key)
 
             if ret.get("name") == assignment_name:
                 selected_assignment = ret
@@ -259,7 +260,7 @@ def get_assignment_info_by_name(api_key, course_name, course_period, assignment_
     return selected_assignment
 
 
-def get_assignment_submissions(api_key, assignment_id, student=None, grader=None):
+def get_assignment_submissions(assignment_id, student=None, grader=None, api_key=None):
     """
     Returns the list of submissions of an assignment, provided an assignment ID
     and, optionally, a student.
@@ -320,7 +321,7 @@ def get_assignment_submissions(api_key, assignment_id, student=None, grader=None
 
     return result
 
-def get_submission_by_id(api_key, submission_id):
+def get_submission_by_id(submission_id, api_key=None):
     """
     Returns the submission information dictionary, given the submission's ID.
     """
@@ -347,7 +348,7 @@ def get_submission_by_id(api_key, submission_id):
             """.format(submission_id, exc)
         )
 
-def get_file(api_key, file_id):
+def get_file(file_id, api_key=None):
     """
     Returns the file given its file ID; the file IDs are provided within a
     submissions information.
@@ -376,7 +377,7 @@ def get_file(api_key, file_id):
         )
 
 
-def set_submission_grader(api_key, submission_id, grader):
+def set_submission_grader(submission_id, grader, api_key=None):
     """
     Changes the grader claimed to a submission with a given submission ID.
     To unclaim a submission, set the `grader` to `None`.
@@ -414,19 +415,19 @@ def set_submission_grader(api_key, submission_id, grader):
         )
 
 
-def unclaim_submission(api_key, submission_id):
+def unclaim_submission(submission_id, api_key=None):
     """
     Unclaims a submission, given the submission ID. This unsets the associated
     grader.
     """
     return set_submission_grader(
-        api_key=api_key,
         submission_id=submission_id,
-        grader=None
+        grader=None,
+        api_key=api_key,
     )
 
 
-def remove_comments(api_key, submission_id=None, file_id=None):
+def remove_comments(submission_id=None, file_id=None, api_key=None):
     """
     Removes all comments either from the submission with the given submission ID
     or from the file with the given file ID.
@@ -490,7 +491,7 @@ def remove_comments(api_key, submission_id=None, file_id=None):
     return (total_comments == deleted_comments)
 
 
-def delete_submission(api_key, submission_id):
+def delete_submission(submission_id, api_key=None):
     """
     Deletes the submission with the given submission ID; raises an exception
     if the submission does not exist or cannot be deleted.
@@ -519,7 +520,7 @@ def delete_submission(api_key, submission_id):
         )
 
 
-def delete_file(api_key, file_id):
+def delete_file(file_id, api_key=None):
     """
     Deletes the file with the given file ID; raises an exception
     if the file does not exist or cannot be deleted.
@@ -548,7 +549,7 @@ def delete_file(api_key, file_id):
         )
 
 
-def post_file(api_key, submission_id, filename, content, extension):
+def post_file(submission_id, filename, content, extension, api_key=None):
     """
     Uploads a file to a submission.
     """
@@ -583,12 +584,12 @@ def post_file(api_key, submission_id, filename, content, extension):
                 {}
                 """.format(filename, submission_id, exc)),
             # Additional fields
-            api_key=api_key,
             submission_id=submission_id,
+            api_key=api_key,
         )
 
 
-def post_submission(api_key, assignment_id, students, files):
+def post_submission(assignment_id, students, files, api_key=None):
     """
     Uploads a submission, give the assignment's ID, and a dictionary containing
     the information on the files to upload.
@@ -626,9 +627,9 @@ def post_submission(api_key, assignment_id, students, files):
                 {}
                 """.format(students, assignment_id, exc)),
             # Additional fields
-            api_key=api_key,
             assignment_id=assignment_id,
             submission_id=submission_id,
+            api_key=api_key,
         )
 
     # Upload the individual files
@@ -636,11 +637,11 @@ def post_submission(api_key, assignment_id, students, files):
     try:
         for file in files:
             file_obj = post_file(
-                api_key=api_key,
                 submission_id=submission.get("id"),
                 filename=file["name"],
                 content=file["code"],
-                extension=file["extension"]
+                extension=file["extension"],
+                api_key=api_key,
             )
             file_id = None if file_obj == None else file_obj.get("id", None)
             if file_id != None:
@@ -654,15 +655,15 @@ def post_submission(api_key, assignment_id, students, files):
                 {}
                 """.format(submission.get("id"), exc)),
             # Additional fields
-            api_key=api_key,
             assignment_id=assignment_id,
             submission_id=submission.get("id"),
             file_ids=added_file_ids,
+            api_key=api_key,
         )
 
     return submission
 
-def post_comment(api_key, file, text, pointDelta, startChar, endChar, startLine, endLine, rubricComment=None):
+def post_comment(file, text, pointDelta, startChar, endChar, startLine, endLine, rubricComment=None, api_key=None):
     """
     Adds comment specified by (startChar, endChar, startLine, endLine) to file
     """
@@ -709,7 +710,7 @@ def post_comment(api_key, file, text, pointDelta, startChar, endChar, startLine,
 
     return comment
 
-def set_submission_students(api_key, submission_id, students):
+def set_submission_students(submission_id, students, api_key=None):
     """
     Modifies the students associated with a submission.
     """
@@ -740,7 +741,7 @@ def set_submission_students(api_key, submission_id, students):
             """.format(students, submission_id, exc)
         )
 
-def remove_students_from_submission(api_key, submission_info, students_to_remove):
+def remove_students_from_submission(submission_info, students_to_remove, api_key=None):
     """
     Removes students from a submission, and possibly delete the submission if no
     user is associated with it anymore.
@@ -772,7 +773,7 @@ def _submission_list_is_unclaimed(submissions):
             return False
     return True
 
-def get_course_grades(api_key, course_name, course_period, only_finalized=True):
+def get_course_grades(course_name, course_period, only_finalized=True, api_key=None):
     """
     Returns a dictionary mapping every student in the specified course
     to a dictionary, which itself maps assignment names to grades. By

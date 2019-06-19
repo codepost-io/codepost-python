@@ -21,7 +21,7 @@ from codePost_api import errors
 from codePost_api import upload
 
 # test constants
-TEST_API_KEY = 'TEST_KEY'
+TEST_API_KEY = "TEST_KEY"
 
 class _AssertHelper(unittest.TestCase):
     def runTest(self):
@@ -51,26 +51,26 @@ def is_exception(obj):
 
 #########################################################################
 
-@patch('codePost_api.upload._post_submission')
-@patch('codePost_api.upload._get_assignment_submissions')
+@patch("codePost_api.upload._post_submission")
+@patch("codePost_api.upload._get_assignment_submissions")
 def test_upload_submission_with_no_conflicts(mock_get_submissions, mock_post_submission):
 
     # create mock data
     assignment = {
-      'id' : 111,
+      "id" : 111,
     }
 
     file1 = {
-      'code' : 'test',
-      'name' : 'test.txt',
-      'extension' : 'txt',
+      "code" : "test",
+      "name" : "test.txt",
+      "extension" : "txt",
     }
 
     def side_effect(api_key, assignment_id, students, files):
         return {
-          'assignment' : assignment_id,
-          'students' : students,
-          'files' : files,
+          "assignment" : assignment_id,
+          "students" : students,
+          "files" : files,
         }
 
     # setup mocks
@@ -78,36 +78,40 @@ def test_upload_submission_with_no_conflicts(mock_get_submissions, mock_post_sub
     mock_post_submission.side_effect = side_effect
 
     # run function
-    response = upload.upload_submission(TEST_API_KEY, assignment, ['student1@codepost.io'], [file1])
+    response = upload.upload_submission(
+        api_key=TEST_API_KEY,
+        assignment=assignment,
+        students=["student1@codepost.io"],
+        files=[file1])
     answer = {
-      'assignment' : 111,
-      'students' : ['student1@codepost.io'],
-      'files' : [file1]
+        "assignment" : 111,
+        "students" : ["student1@codepost.io"],
+        "files" : [file1]
     }
     _assert.assertEqual(answer, response)
 
 
 
-@patch('codePost_api.upload._post_submission')
-@patch('codePost_api.upload._get_assignment_submissions')
+@patch("codePost_api.upload._post_submission")
+@patch("codePost_api.upload._get_assignment_submissions")
 def test_upload_submission_with_no_conflictsm(mock_get_submissions, mock_post_submission):
 
     # create mock data
     assignment = {
-      'id' : 111,
+        "id" : 111,
     }
 
     file1 = {
-      'code' : 'test',
-      'name' : 'test.txt',
-      'extension' : 'txt',
+        "code" : "test",
+        "name" : "test.txt",
+        "extension" : "txt",
     }
 
     def side_effect(api_key, assignment_id, students, files):
         return {
-          'assignment' : assignment_id,
-          'students' : students,
-          'files' : files,
+            "assignment" : assignment_id,
+            "students" : students,
+            "files" : files,
         }
 
     # setup mocks
@@ -115,11 +119,15 @@ def test_upload_submission_with_no_conflictsm(mock_get_submissions, mock_post_su
     mock_post_submission.side_effect = side_effect
 
     # run function
-    response = upload.upload_submission(TEST_API_KEY, assignment, ['student1@codepost.io'], [file1])
+    response = upload.upload_submission(
+        api_key=TEST_API_KEY,
+        assignment=assignment,
+        students=["student1@codepost.io"],
+        files=[file1])
     answer = {
-      'assignment' : 111,
-      'students' : ['student1@codepost.io'],
-      'files' : [file1]
+        "assignment" : 111,
+        "students" : ["student1@codepost.io"],
+        "files" : [file1]
     }
     _assert.assertEqual(answer, response)
 

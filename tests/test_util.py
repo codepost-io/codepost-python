@@ -39,25 +39,27 @@ _assert = _AssertHelper()
 def test_validate_api_key_on_server_success(mock_get):
 
     mock_get.return_value.status_code = 200
-    _assert.assertTrue(util.validate_api_key(TEST_API_KEY))
+    _assert.assertTrue(util.validate_api_key(api_key=TEST_API_KEY))
 
 @patch("codePost_api.util._requests.get")
 def test_validate_api_key_on_server_success_without_authorization(mock_get):
 
     mock_get.return_value.status_code = 403
-    _assert.assertTrue(util.validate_api_key(TEST_API_KEY))
+    _assert.assertTrue(util.validate_api_key(api_key=TEST_API_KEY))
 
 @patch("codePost_api.util._requests.get")
 def test_validate_api_key_on_server_failure(mock_get):
 
     mock_get.return_value.status_code = 401
-    _assert.assertFalse(util.validate_api_key(TEST_API_KEY))
+    # Using refresh=True to avoid caching mechanisms
+    _assert.assertFalse(util.validate_api_key(api_key=TEST_API_KEY, refresh=True))
 
 @patch("codePost_api.util._requests.get")
 def test_validate_api_key_on_server_crash(mock_get):
 
     mock_get.side_effect = lambda x: 1/0 # an(y) exception
-    _assert.assertFalse(util.validate_api_key(TEST_API_KEY))
+    # Using refresh=True to avoid caching mechanisms
+    _assert.assertFalse(util.validate_api_key(api_key=TEST_API_KEY, refresh=True))
 
 def test_validate_api_key_none():
     _assert.assertFalse(util.validate_api_key(None, log_outcome=True))

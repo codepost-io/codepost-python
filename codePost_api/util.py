@@ -19,10 +19,12 @@ from __future__ import print_function # Python 2
 #
 import copy as _copy
 import functools as _functools
+import inspect as _inspect
 import json as _json
 import logging as _logging
 import os as _os
 import time as _time
+import sys as _sys
 #
 try:
     # Python 3
@@ -89,9 +91,11 @@ DEFAULT_CONFIG_PATHS = [
 
 #########################################################################
 
+
 # Will contain a list of all the loggers we have configured
 # (to avoid configuring them multiple times, which will result in
 # echoed statements in the logger)
+
 _configured_loggers = []
 
 class _Color:
@@ -166,6 +170,13 @@ def get_logger(name=None):
 #########################################################################
 
 
+# Will contain a list of API keys that have already been verified to avoid
+# the cost of making an additional API call for every method that uses
+# the decorator below.
+
+_checked_api_keys = {}
+
+
 def _is_stringable(obj):
     try:
         str(obj)
@@ -173,11 +184,12 @@ def _is_stringable(obj):
         return False
     return True
 
-def validate_api_key(api_key, log_outcome=False, caption=""):
+def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
     # type: (str) -> bool
     """
     Checks whether a provided codePost API key is valid.
     """
+    global _checked_api_keys
     
     # Used for reporting
     api_key_str = "N/A"
@@ -188,15 +200,53 @@ def validate_api_key(api_key, log_outcome=False, caption=""):
         """
         Helper method to return `False` and possibly log a warning.
         """
-        if log_outcome:
 
+        # Add to cache as failure
+        if api_key_str != "N/A":
+            if not api_key in _checked_api_keys:
+                _checked_api_keys[api_key] = False
+        
+        # Log failure
+        if log_outcome:
             _logger.warning(
                 "API_KEY '{:.5}...' {}seems invalid.".format(
                     api_key_str,
                     caption
                 ))
+        
         return False
     
+    ######################################################################
+    # CACHE:
+    # Save previously computed results to avoid going through the same
+    # checks multiple time within the execution of the same script.
+    ######################################################################
+
+    if api_key in _checked_api_keys:
+        if refresh:
+            if log_outcome:
+                _logger.info(
+                    "API_KEY '{:.5}...' found in cache => PURGING".format(
+                    api_key_str,
+                    caption
+                ))
+            
+            del _checked_api_keys[api_key]
+
+        else:
+            if log_outcome:
+                _logger.info(
+                    "API_KEY '{:.5}...' {}found in cache.".format(
+                    api_key_str,
+                    caption
+                ))
+
+            if _checked_api_keys[api_key]:
+                return True
+            
+            else:
+                return invalid_api_key()
+
     ######################################################################
     # HEURISTICS:
     # Trying to reject the candidate key without making an HTTP request.
@@ -231,10 +281,14 @@ def validate_api_key(api_key, log_outcome=False, caption=""):
             "{}/courses/".format(BASE_URL),
             headers=auth_headers
         )
+
         # This API endpoint will return HTTP 401 if the authorization
         # token is invalid. Other codes will have other meanings.
         if r.status_code == 401:
             return invalid_api_key()
+        
+        # Add to cache as success
+        _checked_api_keys[api_key] = True
         
         return True
 
@@ -404,6 +458,94 @@ def configure_api_key(api_key=None, override=True):
         
     return None
     
+#########################################################################
+
+def _filter_kwargs_for_function(func, kwargs):
+    
+    keys_from_func = set()
+    if _sys.version_info >= (3, 0):
+        # Python 3
+        sig = _inspect.signature(func)
+        keys_from_func = set(
+            param.name
+            for param in sig.parameters.values()
+            if param.kind == param.POSITIONAL_OR_KEYWORD
+        )
+    else: # pragma: no cover
+        # Python 2
+        keys_from_func = set(_inspect.getargspec(func).args)
+    
+    keys_from_kwargs = set(kwargs.keys())
+    keys = keys_from_kwargs.intersection(keys_from_func)
+    
+    filtered_kwargs = { key: kwargs[key] for key in keys }
+    
+    return filtered_kwargs
+
+class api_key_decorator(object):
+    """
+    Decorator which injects an API key in calling parameters of methods
+    that expect an API key.
+    """
+
+    def __init__(self, api_key_override=True):
+        self._api_key_override = api_key_override
+
+    def __call__(self, target_function):
+
+        def _wrapper(*args, **kwargs):
+            global _checked_api_keys
+            
+            api_key = None
+
+            # See what the user has provided, if anything
+            candidate_api_key = kwargs.get("api_key", None)
+            
+            # Check if this candidate should override any more
+            # sophisticated guess that we could make (because the
+            # `api_key_override` is unique to the decorator, it is deleted
+            # from the `kwargs` before being passed to the `targetfunc`.)
+            
+            api_key_override = self._api_key_override
+            if "api_key_override" in kwargs:
+                api_key_override = kwargs["api_key_override"]
+                del kwargs["api_key_override"]
+            
+            if api_key_override and candidate_api_key:
+                api_key = candidate_api_key
+            
+            else:
+                
+                # Check whether the user-provided API Key
+                if candidate_api_key:
+
+                    if not candidate_api_key in _checked_api_keys:
+                        _checked_api_keys[candidate_api_key] = \
+                            validate_api_key(api_key=candidate_api_key)
+
+                    if _checked_api_keys[candidate_api_key]:
+                        api_key = candidate_api_key
+                
+                # Check automatic configuration (only if candidate did not
+                # seem to pan out)
+                if not api_key:
+                    api_key = configure_api_key()
+                    if api_key:
+                        _checked_api_keys[api_key] = \
+                            validate_api_key(api_key=api_key)
+                
+                # Override the parameter `api_key` before calling method
+                kwargs["api_key"] = api_key
+            
+            # Call target function
+            filtered_kwargs = _filter_kwargs_for_function(
+                func=target_function,
+                kwargs=kwargs)
+            
+            return target_function(*args, **filtered_kwargs)
+        
+        return _wrapper
+
 #########################################################################
 
 

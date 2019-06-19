@@ -1,4 +1,5 @@
 # Standard library imports...
+import contextlib
 import inspect
 import itertools
 import unittest
@@ -126,41 +127,17 @@ def test_upload_submission_with_no_conflictsm(mock_get_submissions, mock_post_su
 
 
 class AbstractManyMocksTestCase(unittest.TestCase):
-
-    @classmethod
-    def _configure_mock_to_outcome(cls, mock, outcome, name=None):
-
-        # Reset the mock
-        mock.return_value = None
-        mock.side_effect = None
-
-        # Determine whether it should return a value, or throw an
-        # exception
-
-        if is_exception(outcome):
-            def _raise_helper(*args, **kwargs):
-                raise outcome(message=name)
-            mock.side_effect = _raise_helper
-        
-        else:
-            mock.return_value = outcome
-        
-        return mock
-
-    @classmethod
-    def _configure_mocks_to_outcomes(cls, outcome_tuple):
-        for (method, outcome) in outcome_tuple.items():
-            if method in cls._mocks:
-                cls._mocks[method] = cls._configure_mock_to_outcome(
-                    mock=cls._mocks[method],
-                    outcome=outcome,
-                    name=method)
-
+    
+    # Empty abstract fields
+    _methods_prefix = ""
+    _methods_without_impact = []
+    _methods_with_impact = []
+    
+    # Main internal variable
+    _outcomes = None
+    
     @classmethod
     def setUpClass(cls):
-
-        cls._patchers = {}
-        cls._mocks = {}
         cls._outcomes = {}
         
         # Setup mocks for submethods with no impact on the control flow
@@ -168,14 +145,12 @@ class AbstractManyMocksTestCase(unittest.TestCase):
         # not be executed.
 
         for method in cls._methods_without_impact:
-            method_full_name = cls._methods_prefix.format(method)
-
-            # Create the mock and apply it
-            cls._patchers[method] = patch(method_full_name)
-            cls._mocks[method] = cls._patchers[method].start()
-
-            # Value for returned by all methods without impact
-            cls._mocks[method].return_value = True
+            record = {
+                "name": method,
+                "fullname": cls._methods_prefix.format(method),
+                "outcomes": list([True]), # Make sure a new list is created
+            }
+            cls._outcomes[method] = record
         
         # Setup mocks for more important submethods, which have some
         # impact on the control flow of the program; these methods
@@ -184,76 +159,42 @@ class AbstractManyMocksTestCase(unittest.TestCase):
 
         for method_dict in cls._methods_with_impact:
             method = method_dict["name"]
-            method_full_name = cls._methods_prefix.format(method)
-
-            # Create the mock and apply it
-            cls._patchers[method] = patch(method_full_name)
-            cls._mocks[method] = cls._patchers[method].start()
-
-            # Store all the outcomes
-            cls._outcomes[method] = method_dict.get(
-                "outcomes",
-                list([True]))
-
+            record = {
+                "name": method,
+                "fullname": cls._methods_prefix.format(method),
+                "outcomes": method_dict.get("outcomes", list([True]))
+            }
+            cls._outcomes[method] = record
+    
     @classmethod
     def tearDownClass(cls):
-        for _method, mock_obj in cls._mocks.items():
-            mock_obj.stop()
-    
-    @classmethod
-    def _make_outcome_aux_generator(cls):
-        if hasattr(cls, "_outcomes") and hasattr(cls, "_mocks"):
-            items = cls._outcomes.items()
-            keys = list(map(lambda item: item[0], items))
-            values = map(lambda item: item[1], items)
-            values_product = itertools.product(*values)
-            return { "keys": keys, "generator": values_product }
-    
-    @classmethod
-    def reset_mock_outcomes(cls):
-        cls._generator = cls._make_outcome_aux_generator()
-    
-    @classmethod
-    def _next_mock_outcome_tuple(cls):
-        if not hasattr(cls, "_generator"):
-            cls.reset_mock_outcomes()
-        
-        if cls._generator:
-            next_tuple = None
-            try:
-                next_tuple = cls._generator["generator"].__next__()
-            except StopIteration:
-                return None
-            
-            if next_tuple:
-                return dict(zip(cls._generator["keys"], next_tuple))
-
-    @classmethod
-    def next_mock_outcome(cls):
-
-        # Compute the next outcome tuple
-        outcome_tuple = cls._next_mock_outcome_tuple()
-        if outcome_tuple == None:
-            return None
-
-        # Configure the environment
-        cls._configure_mocks_to_outcomes(outcome_tuple)
-        return outcome_tuple
+        del cls._outcomes
+        cls._outcomes = None
     
     @classmethod
     def mock_outcome_generator(cls):
         
+        if cls._outcomes == None:
+            return None
+        
+        # List of (key, val) pairs
+        items = cls._outcomes.items()
+
+        # key="name"; val={"name", "fullname", "outcomes"}
+        keys = list(map(lambda item: item[0], items))
+        values = map(lambda item: item[1], items)
+
+        # Extract and combine the outcomes
+        outcomes = list(map(lambda item: item.get("outcomes"), values))
+        outcome_tuples_generator = itertools.product(*outcomes)
+        
         # Generator class
         def _generator():
-            generator_dict = cls._make_outcome_aux_generator()
-
-            keys = generator_dict["keys"]
-            generator = generator_dict["generator"]
 
             while True:
                 current = None
                 try:
-                    current = generator.__next__()
+                    current = outcome_tuples_generator.__next__()
                 except StopIteration:
                     break
                 
@@ -262,6 +203,58 @@ class AbstractManyMocksTestCase(unittest.TestCase):
                 yield outcome_tuple
         
         return _generator()
+
+    @contextlib.contextmanager
+    def subTestOutcome(self, outcome_tuple=None, **kwargs):
+        
+        _patches = []
+
+        # Hand-off to the subtest
+        with self.subTest(outcome=outcome_tuple, **kwargs):
+
+            # Configure all the patches and mocks
+            for (method, outcome) in outcome_tuple.items():
+
+                # Full name of method
+                method_full_name = method
+                if not "." in method_full_name:
+                    method_full_name = self._methods_prefix.format(method)
+                
+                # Setup the patch and create the mock
+                method_patch = patch(method_full_name)
+                method_mock = method_patch.__enter__()
+
+                # Save patch for later deactivation
+                _patches.append(method_patch)
+
+                # Configure mock
+                method_mock.side_effect = None
+                if is_exception(outcome):
+                    
+                    # Necessary to frame the arguments in the lambda
+                    # otherwise they will change as they are affected
+                    # in the outer frame
+                    def _make_raise_helper(method_full_name, outcome):
+                        def _aux(*args, **kwargs):
+                            raise outcome(message=method_full_name)
+                        return _aux
+                    
+                    method_mock.side_effect = _make_raise_helper(
+                        method_full_name=method_full_name,
+                        outcome=outcome
+                    )
+                    _raise_helper = None
+                
+                else:
+                    method_mock.return_value = outcome
+            
+            # Return to calling method
+            yield
+        
+        # Deactivate the patches
+        while len(_patches) > 0:
+            current = _patches.pop()
+            current.__exit__()
 
 
 
@@ -320,11 +313,7 @@ class UploadTestCase(AbstractUploadTestCase):
             for mode in list(upload.UploadModes.__members__.values()):
 
                 # Create a subtest
-                with self.subTest(outcome=outcome_tuple, mode=mode):
-
-                    # Configure the mocks
-                    self._configure_mocks_to_outcomes(
-                        outcome_tuple=outcome_tuple)
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
 
                     # The method that will run this test
                     def _run_test():
@@ -370,10 +359,7 @@ class UploadTestCase(AbstractUploadTestCase):
             for mode in list(upload.UploadModes.__members__.values()):
 
                 # Create a subtest
-                with self.subTest(outcome=outcome_tuple, mode=mode):
-                    # Configure the mocks
-                    self._configure_mocks_to_outcomes(
-                        outcome_tuple=outcome_tuple)
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
 
                     # The method that will run this test
                     def _run_test():
@@ -433,11 +419,7 @@ class UploadTestCase(AbstractUploadTestCase):
             for mode in list(upload.UploadModes.__members__.values()):
 
                 # Create a subtest
-                with self.subTest(outcome=outcome_tuple, mode=mode):
-                    # Configure the mocks
-                    self._configure_mocks_to_outcomes(
-                        outcome_tuple=outcome_tuple)
-
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
                     # The method that will run this test
                     def _run_test():
                         return upload.upload_submission(
@@ -500,11 +482,7 @@ class UploadTestCase(AbstractUploadTestCase):
             for mode in list(upload.UploadModes.__members__.values()):
 
                 # Create a subtest
-                with self.subTest(outcome=outcome_tuple, mode=mode):
-                    # Configure the mocks
-                    self._configure_mocks_to_outcomes(
-                        outcome_tuple=outcome_tuple)
-
+                with self.subTestOutcome(outcome_tuple=outcome_tuple, mode=mode):
                     # The method that will run this test
                     def _run_test():
                         return upload.upload_submission(
@@ -552,56 +530,4 @@ class AbstractFilediffTestCase(AbstractManyMocksTestCase):
     ]
 
 
-class FilediffTestCase(AbstractFilediffTestCase):
-    # CASE 1: No existing submission => create a new submission
-    @patch("codePost_api.upload._get_file")
-    def tast_with_no_existing_submissions(self, mock_gf):
-        # create mock data
-        file_id1 = 7709
 
-        submission1 = { "id" : 1, "files": [file_id1] }
-
-        file1  = { "code": "t1", "name": "t1.txt", "extension": "txt", }
-        file1m = { "code": "t1m", "name": "t1.txt", "extension": "txt", }
-        file2  = { "code": "t2", "name": "t2.txt", "extension": "txt", }
-
-        def _mock_gf_method(file_id, *args, **kwargs):
-            if file_id == file_id1:
-                return file1
-            return file2
-        mock_gf.side_effect = _mock_gf_method
-
-        # For each of the multiple paths:
-        for outcome_tuple in self.mock_outcome_generator():
-            
-            # For all possible upload modes
-            for mode in list(upload.UploadModes.__members__.values()):
-
-                # Create a subtest
-                with self.subTest(outcome=outcome_tuple, mode=mode):
-
-                    # Configure the mocks
-                    self._configure_mocks_to_outcomes(
-                        outcome_tuple=outcome_tuple)
-
-                    # The method that will run this test
-                    def _run_test():
-                        return upload._upload_submission_filediff(
-                            api_key=TEST_API_KEY,
-                            submission_info=submission1,
-                            newest_files=[file1m],
-                            mode=mode
-                        )
-                    
-                    # Running the test with correct outcome
-                    df_outcome = outcome_tuple["delete_file"]
-                    pf_outcome = outcome_tuple["post_file"]
-                    if is_exception(pf_outcome):
-                        self.assertRaises(pf_outcome, _run_test)
-                    elif is_exception(df_outcome):
-                        self.assertRaises(df_outcome, _run_test)
-                    else:
-                        #if mode.value["updateExistingFiles"]:
-                        if mode.value["updateExistingFiles"]:
-                            self.assertTrue(_run_test())
-                        pass #self.assertTrue(_run_test())

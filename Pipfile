@@ -11,12 +11,15 @@ tox = "*"
 PyYAML = "*"
 pylint = "*"
 pytest-subtests = "*"
+ipykernel = "*"
 
 [packages]
+six = "*"
 requests = "*"
 PyYAML = "*"
-urllib3 = "*"
-codePost_api = {path = ".",editable = true}
+python-forge = "*"
+typeguard = "*"
+codepost = {path = ".",editable = true}
 
 [requires]
 python_version = "3.7"

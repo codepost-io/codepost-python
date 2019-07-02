@@ -11,3 +11,6 @@ License: Copyright (c) 2019 codePost, licensed under the MIT license
 """
 
 from . import util
+
+util.config.configure_api_key()
+

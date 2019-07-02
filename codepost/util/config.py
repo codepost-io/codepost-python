@@ -61,6 +61,8 @@ except ImportError: # pragma: no cover
 from .. import util as _util
 from . import logging as _logging
 
+from .misc import _make_f
+
 # =============================================================================
 
 # Global submodule constants
@@ -86,17 +88,9 @@ _checked_api_keys = {}
 
 # =============================================================================
 
-def _f(s):
-    if s:
-        try:
-            return s.format(**globals(), **locals())
-        except KeyError:
-            raise
-        except ValueError:
-            raise
-        except:
-            pass
-    
+# Replacement f"..." compatible with Python 2 and 3
+_f = _make_f(globals=lambda: globals(), locals=lambda: locals())
+
 _MSG_API_KEY_HELP = _f("""
 => Without a valid API key, codePost API calls are expected to fail.
 

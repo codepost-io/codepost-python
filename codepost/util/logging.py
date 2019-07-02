@@ -19,7 +19,9 @@ import eliot
 import eliot.stdlib
 
 # Eliot imports
-from eliot import log_call, start_action, start_task, Message, Action
+from eliot import Message
+from eliot import log_call, start_task
+from eliot import start_action, current_action, Action
 
 # =============================================================================
 
@@ -33,6 +35,19 @@ _logger = None
 _only_eliot = False
 _eliot_configured = False
 _loggers_configured = {}
+
+# =============================================================================
+
+def fail_action(reason="", warning=True):
+    # type: (str, bool) -> None
+    """
+    Helper method to report an `eliot` action as failed.
+    """
+    exc_klass = RuntimeError
+    if warning:
+        exc_klass = RuntimeWarning
+        
+    return current_action().finish(exception=exc_klass(reason))
 
 # =============================================================================
 
@@ -73,11 +88,12 @@ class _SimpleColorFormatter(_logging.Formatter):
         for the log events which are output to standard output.
         """
         _t = _blessings.Terminal()
+        f = lambda s: s.format(_t=_t) # Python 2 compatibility of f"..."
         self._title = {
-            "DEBUG":   f"{_t.normal}[{_t.bold}{_t.blue}DBUG{_t.normal}]",
-            "INFO":    f"{_t.normal}[{_t.bold}{_t.green}INFO{_t.normal}]",
-            "WARNING": f"{_t.normal}[{_t.bold}{_t.yellow}WARN{_t.normal}]",
-            "ERROR":   f"{_t.normal}[{_t.bold}{_t.red}ERR.{_t.normal}]",
+            "DEBUG":   f("{_t.normal}[{_t.bold}{_t.blue}DBUG{_t.normal}]"),
+            "INFO":    f("{_t.normal}[{_t.bold}{_t.green}INFO{_t.normal}]"),
+            "WARNING": f("{_t.normal}[{_t.bold}{_t.yellow}WARN{_t.normal}]"),
+            "ERROR":   f("{_t.normal}[{_t.bold}{_t.red}ERR.{_t.normal}]"),
         }
         super(_SimpleColorFormatter, self).__init__(*args, **kwargs)
 

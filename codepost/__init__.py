@@ -9,3 +9,5 @@ Provides a convenient Python interface to the codePost API. Start scripting!
     URL: github.com/codepost-io/codepost-python
 License: Copyright (c) 2019 codePost, licensed under the MIT license
 """
+
+from . import util

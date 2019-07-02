@@ -86,6 +86,48 @@ _checked_api_keys = {}
 
 # =============================================================================
 
+def _f(s):
+    if s:
+        try:
+            return s.format(**globals(), **locals())
+        except KeyError:
+            raise
+        except ValueError:
+            raise
+        except:
+            pass
+    
+_MSG_API_KEY_HELP = _f("""
+=> Without a valid API key, codePost API calls are expected to fail.
+
+=> The codePost SDK searches for a valid API key in the following:
+    1. provided as a parameter of methods, through `api_key`;
+    2. previously detected or (for testing purposes) hard-coded in the SDK;
+    3. as an environment variable (typically `CP_API_KEY`);
+    4. within a YAML configuration file (typically `.codepost-config.yaml`).
+
+=> You can obtain your API key by accessing your Settings page while logged
+   into codePost:
+        {SETTINGS_URL}
+   and manually call `codePost_api.configure_api_key(api_key=...)` from your
+   Python code.
+
+Feel free to contact api@codepost.io for more assistance.
+""")
+
+_MSG_API_KEY_INVALID = _f("""
+API key "{{api_key:.5}}..."{{caption}} seems invalid.
+{_MSG_API_KEY_HELP}
+""")
+
+_MSG_API_KEY_NOT_FOUND = _f("""
+API key could not be detected.
+{_MSG_API_KEY_HELP}
+""")
+
+# =============================================================================
+
+@_logging.log_call
 def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
     # type: (str) -> bool
     """
@@ -107,17 +149,14 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
         # Log failure
         if log_outcome:
             _logger.warning(
-                """
-                API_KEY '{:.5}...' {}seems invalid.
-
-                You can obtain your API key by accessing your Settings page
-                while logged into codePost:
-                    {} 
-                """.format(
-                    _util.robust_str(obj=api_key),
-                    caption,
-                    SETTINGS_URL
+                _MSG_API_KEY_INVALID.format(
+                    api_key=_util.robust_str(obj=api_key),
+                    caption=caption,
                 ))
+        
+        _logging.fail_action(
+            "Failed validation of API KEY '{}'{}.".format(
+                _util.robust_str(obj=api_key), caption))
         
         return False
     
@@ -132,7 +171,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
             if log_outcome:
                 _logger.debug(
                     """
-                    API_KEY '{:.5}...' {}found in cache => PURGING
+                    API_KEY '{:.5}...'{} found in cache => PURGING
                     """.format(
                     _util.robust_str(obj=api_key),
                     caption
@@ -144,7 +183,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
             if log_outcome:
                 _logger.debug(
                     """
-                    API_KEY '{:.5}...' {}found in cache.
+                    API_KEY '{:.5}...'{} found in cache.
                     """.format(
                     _util.robust_str(obj=api_key),
                     caption
@@ -216,6 +255,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 
 # =============================================================================
 
+@_logging.log_call
 def configure_api_key(api_key=None, override=True):
     # type: (str, bool) -> str
     """
@@ -253,7 +293,7 @@ def configure_api_key(api_key=None, override=True):
         validate_api_key(
             api_key=api_key,
             log_outcome=True,
-            caption="provided as override ")
+            caption=" provided as override")
 
         _api_key_override = api_key
         return _api_key_override
@@ -269,7 +309,7 @@ def configure_api_key(api_key=None, override=True):
         validate_api_key(
             api_key=_api_key_override,
             log_outcome=True,
-            caption="stored as override ")
+            caption=" stored as override")
 
         return _api_key_override
 
@@ -287,7 +327,7 @@ def configure_api_key(api_key=None, override=True):
         validate_api_key(
             api_key=_api_key,
             log_outcome=True,
-            caption="previously detected or hard-coded in the library ")
+            caption=" previously detected or hard-coded in the library")
 
         return _api_key
     
@@ -308,7 +348,7 @@ def configure_api_key(api_key=None, override=True):
         validate_api_key(
             api_key=_api_key,
             log_outcome=True,
-            caption="obtained from an environment variable ")
+            caption=" obtained from an environment variable")
         
         return _api_key
 
@@ -345,6 +385,13 @@ def configure_api_key(api_key=None, override=True):
             _logger.debug(
                 "Configuration file detected: "
                 "Loading successful, but no valid API_KEY.")
+
+            if config.get("api-key", "") != "":
+                _logger.debug(
+                    "The configuration file may be using the "
+                    "key name 'api-key' instead of 'api_key'."
+                )
+            
             return None
         
         _api_key = config.get("api_key")
@@ -360,16 +407,13 @@ def configure_api_key(api_key=None, override=True):
         validate_api_key(
             api_key=_api_key,
             log_outcome=True,
-            caption="obtained configuration file '{}' ".format(location))
+            caption=" obtained config file '{}'".format(location))
         
         return _api_key
     
-    _logger.warning(
-        ("API_KEY could not be detected. "
-         "codePost API calls are expected to fail. "
-         "You may retrieve your API key from {} "
-         "and manually call `codePost_api.configure_api_key(api_key=...)`."
-        ).format(SETTINGS_URL))
+    _logger.warning(_MSG_API_KEY_NOT_FOUND)
+    
+    _logging.current_action().finish(exception=RuntimeWarning("No API key"))
         
     return None
 

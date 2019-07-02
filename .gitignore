@@ -1,3 +1,5 @@
+.codepost-config.yaml
+
 # Build data
 /.eggs
 /build

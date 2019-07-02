@@ -1,0 +1,445 @@
+# =============================================================================
+# codePost v2.0 SDK
+#
+# CONFIG SUB-MODULE
+# =============================================================================
+
+from __future__ import print_function # Python 2
+
+# Python stdlib imports
+import copy as _copy
+import functools as _functools
+import inspect as _inspect
+import json as _json
+import logging as _logging
+import os as _os
+import time as _time
+import sys as _sys
+try:
+    # Python 3
+    from urllib.parse import urljoin
+    from urllib.parse import quote as urlquote
+    from urllib.parse import urlencode as urlencode
+except ImportError: # pragma: no cover
+    # Python 2
+    from urlparse import urljoin
+    from urllib import quote as urlquote
+    from urllib import urlencode as urlencode
+
+# External dependencies
+import better_exceptions as _better_exceptions
+import requests as _requests
+from yaml import load as _load_yaml
+try:
+    from yaml import CLoader as _YamlLoader
+except ImportError: # pragma: no cover
+    from yaml import Loader as _YamlLoader
+try:
+    # Python 3
+    from enum import Enum as _Enum
+except ImportError: # pragma: no cover
+    no_enum = True
+
+    # Python 2 fallbacks
+    try:
+        from aenum import Enum as _Enum
+        no_enum = False
+    except ImportError:
+        try:
+            from enum34 import Enum as _Enum
+            no_enum = False
+        except ImportError:
+            pass
+
+    if no_enum:
+        raise RuntimeError(
+            "This package requires an 'Enum' object. These are available "
+            "in Python 3.4+, but requires a third-party library, either "
+            "'enum34' or 'aenum'. Please install:\n\npip install --user aenum")
+
+# Local imports
+from .. import util as _util
+from . import logging as _logging
+
+# =============================================================================
+
+# Global submodule constants
+_LOG_SCOPE = "codepost.config"
+
+SETTINGS_URL = "https://codepost.io/settings"
+BASE_URL = "https://api.codepost.io/"
+DEFAULT_API_KEY_ENV = "CP_API_KEY"
+DEFAULT_CONFIG_PATHS = [
+    "codepost-config.yaml",
+    ".codepost-config.yaml",
+    "~/codepost-config.yaml",
+    "~/.codepost-config.yaml",
+    "../codepost-config.yaml",
+    "../.codepost-config.yaml",
+]
+
+# Global submodule protected attributes
+_logger = _logging.get_logger(name=_LOG_SCOPE)
+_api_key = None
+_api_key_override = None
+_checked_api_keys = {}
+
+# =============================================================================
+
+def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
+    # type: (str) -> bool
+    """
+    Checks whether a provided codePost API key is valid.
+    """
+    global _checked_api_keys
+
+    def invalid_api_key():
+        """
+        Helper method to return `False` and possibly log a warning.
+        """
+        global _checked_api_keys
+
+        # Add to cache as failure
+        if not _util.is_stringable(api_key):
+            if not api_key in _checked_api_keys:
+                _checked_api_keys[api_key] = False
+        
+        # Log failure
+        if log_outcome:
+            _logger.warning(
+                """
+                API_KEY '{:.5}...' {}seems invalid.
+
+                You can obtain your API key by accessing your Settings page
+                while logged into codePost:
+                    {} 
+                """.format(
+                    _util.robust_str(obj=api_key),
+                    caption,
+                    SETTINGS_URL
+                ))
+        
+        return False
+    
+    ######################################################################
+    # CACHE:
+    # Save previously computed results to avoid going through the same
+    # checks multiple time within the execution of the same script.
+    ######################################################################
+
+    if api_key in _checked_api_keys:
+        if refresh:
+            if log_outcome:
+                _logger.debug(
+                    """
+                    API_KEY '{:.5}...' {}found in cache => PURGING
+                    """.format(
+                    _util.robust_str(obj=api_key),
+                    caption
+                ))
+            
+            del _checked_api_keys[api_key]
+
+        else:
+            if log_outcome:
+                _logger.debug(
+                    """
+                    API_KEY '{:.5}...' {}found in cache.
+                    """.format(
+                    _util.robust_str(obj=api_key),
+                    caption
+                ))
+
+            if _checked_api_keys[api_key]:
+                return True
+            
+            else:
+                return invalid_api_key()
+
+    ######################################################################
+    # HEURISTICS:
+    # Trying to reject the candidate key without making an HTTP request.
+    ######################################################################
+
+    # Some guesses can easily be rejected
+    
+    if api_key == None or api_key == "":
+        return invalid_api_key()
+    
+    # If it's not a string...
+    
+    if not _util.is_stringable(api_key):
+        return invalid_api_key()
+    
+    # If it's too short...
+
+    if len(api_key) < 5:
+        return invalid_api_key()
+
+    # In our current implementation, we use tokens generated by the DRF
+    # (see https://git.io/fjKgC)
+
+    if len(api_key) != 40:
+        return invalid_api_key()
+    
+    ######################################################################
+    # HTTP REQUEST
+    ######################################################################
+
+    try:
+        auth_headers = {"Authorization": "Token {}".format(api_key)}
+
+        r = _requests.get(
+            "{}/courses/".format(BASE_URL),
+            headers=auth_headers
+        )
+
+        # This API endpoint will return HTTP 401 if the authorization
+        # token is invalid. Other codes will have other meanings.
+
+        if r.status_code == 401:
+            return invalid_api_key()
+        
+        # Add to cache as success
+        
+        _checked_api_keys[api_key] = True
+        
+        return True
+
+    except:
+        _logger.debug(
+            "Unexpected error while validating an API_KEY '{:.5}...'.".format(
+                _util.robust_str(obj=api_key)
+            ))
+    
+    return invalid_api_key()
+
+# =============================================================================
+
+def configure_api_key(api_key=None, override=True):
+    # type: (str, bool) -> str
+    """
+    Configures the API key to authenticate with the codePost API, by
+    looking at the following sources:
+    - provided as a parameter, through `api_key`;
+    - hard-coded within library (for testing purposes);
+    - as an environment variable (typically `CP_API_KEY`);
+    - within a YAML configuration file.
+
+    When provided with an override `api_key` parameter, this method will
+    store the key in memory for future calls.
+    
+    It is also possible to call the method with `override` set to
+    `False`, to only use the override API key in case one cannot be
+    found in the environment.
+    """
+    global _api_key, _api_key_override
+    
+    # Used for reporting
+    api_key_str = "N/A"
+    if _util.is_stringable(api_key):
+        api_key_str = str(api_key)
+
+    # Override API_KEY by argument
+
+    if override and api_key != None and api_key != "":
+
+        _logger.debug(
+            "API_KEY '{:.5}...' provided as override.".format(
+                api_key_str
+            ))
+
+        # Check validity of provided override key  
+        validate_api_key(
+            api_key=api_key,
+            log_outcome=True,
+            caption="provided as override ")
+
+        _api_key_override = api_key
+        return _api_key_override
+
+    if _api_key_override != None and _api_key_override != "":
+
+        _logger.debug(
+            "API_KEY '{:.5}...' was provided previously as an override.".format(
+                _api_key_override
+            ))
+        
+        # Check validity of stored override key  
+        validate_api_key(
+            api_key=_api_key_override,
+            log_outcome=True,
+            caption="stored as override ")
+
+        return _api_key_override
+
+    # Hard-coded (or reconfigured) API_KEY
+
+    if _api_key != None and _api_key != "":
+
+        _logger.debug(
+            """
+            API_KEY detected in source code or module memory.
+            Not overriding it.
+            """)
+        
+        # Check validity of hard-coded key  
+        validate_api_key(
+            api_key=_api_key,
+            log_outcome=True,
+            caption="previously detected or hard-coded in the library ")
+
+        return _api_key
+    
+    # Environment variable API_KEY
+
+    if _os.environ.get(DEFAULT_API_KEY_ENV, None) != None:
+
+        _api_key = _os.environ.get(DEFAULT_API_KEY_ENV)
+
+        _logger.debug(
+            ("API_KEY detected in environment " +
+            "variable ({}): '{:.5}...'").format(
+                DEFAULT_API_KEY_ENV,
+                _api_key
+            ))
+        
+        # Check validity of environment provided key  
+        validate_api_key(
+            api_key=_api_key,
+            log_outcome=True,
+            caption="obtained from an environment variable ")
+        
+        return _api_key
+
+    # YAML configuration API_KEY
+
+    location = None
+
+    for config_path in DEFAULT_CONFIG_PATHS:
+        config_path = _os.path.abspath(_os.path.expanduser(config_path))
+        if _os.path.exists(config_path) and _os.path.isfile(config_path):
+            location = config_path
+            break
+        else:
+            _logger.debug(
+                "No config file here: {}".format(
+                    config_path))
+    
+    if location != None:
+        _logger.debug("Configuration file detected: {}".format(location))
+
+        config = None
+        try:
+            config = _load_yaml(open(location), Loader=_YamlLoader)
+        except:
+            config = None
+
+        if config == None:
+            _logger.debug(
+                "Configuration file detected: "
+                "Loading failed, no valid API_KEY.")
+            return None
+        
+        if config.get("api_key", "") == "":
+            _logger.debug(
+                "Configuration file detected: "
+                "Loading successful, but no valid API_KEY.")
+            return None
+        
+        _api_key = config.get("api_key")
+        
+        _logger.debug(
+            ("API_KEY detected in configuration file ({}): " +
+            "'{:.5}...'").format(
+                DEFAULT_API_KEY_ENV,
+                _util.robust_str(_api_key)
+            ))
+        
+        # Check validity of environment provided key  
+        validate_api_key(
+            api_key=_api_key,
+            log_outcome=True,
+            caption="obtained configuration file '{}' ".format(location))
+        
+        return _api_key
+    
+    _logger.warning(
+        ("API_KEY could not be detected. "
+         "codePost API calls are expected to fail. "
+         "You may retrieve your API key from {} "
+         "and manually call `codePost_api.configure_api_key(api_key=...)`."
+        ).format(SETTINGS_URL))
+        
+    return None
+
+# =============================================================================
+
+class api_key_decorator(object):
+    """
+    Decorator which injects an API key in calling parameters of methods
+    that expect an API key.
+    """
+
+    def __init__(self, api_key_override=True):
+        self._api_key_override = api_key_override
+
+    def __call__(self, target_function):
+        
+        @_functools.wraps(target_function)
+        def _wrapper(*args, **kwargs):
+            global _checked_api_keys
+            
+            api_key = None
+
+            # See what the user has provided, if anything
+            candidate_api_key = kwargs.get("api_key", None)
+            
+            # Check if this candidate should override any more
+            # sophisticated guess that we could make (because the
+            # `api_key_override` is unique to the decorator, it is deleted
+            # from the `kwargs` before being passed to the `targetfunc`.)
+            
+            api_key_override = self._api_key_override
+            if "api_key_override" in kwargs:
+                api_key_override = kwargs["api_key_override"]
+                del kwargs["api_key_override"]
+            
+            if api_key_override and candidate_api_key:
+                api_key = candidate_api_key
+            
+            else:
+                
+                # Check whether the user-provided API Key
+                if candidate_api_key:
+
+                    if not candidate_api_key in _checked_api_keys:
+                        _checked_api_keys[candidate_api_key] = \
+                            validate_api_key(api_key=candidate_api_key)
+
+                    if _checked_api_keys[candidate_api_key]:
+                        api_key = candidate_api_key
+                
+                # Check automatic configuration (only if candidate did not
+                # seem to pan out)
+                if not api_key:
+                    api_key = configure_api_key()
+                    if api_key:
+                        _checked_api_keys[api_key] = \
+                            validate_api_key(api_key=api_key)
+                
+                # Override the parameter `api_key` before calling method
+                kwargs["api_key"] = api_key
+            
+            # Call target function
+            filtered_kwargs = _util.filter_kwargs_for_function(
+                func=target_function,
+                kwargs=kwargs)
+            
+            return target_function(*args, **filtered_kwargs)
+        
+        return _wrapper
+
+# =============================================================================
+
+

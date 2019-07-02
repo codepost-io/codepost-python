@@ -12,7 +12,7 @@ import os as _os
 import time as _time
 import sys as _sys
 
-# Third-party imports
+# External imports
 import better_exceptions as _better_exceptions
 import blessings as _blessings
 import eliot

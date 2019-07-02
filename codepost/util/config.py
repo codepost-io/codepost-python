@@ -381,8 +381,8 @@ class api_key_decorator(object):
     that expect an API key.
     """
 
-    def __init__(self, api_key_override=True):
-        self._api_key_override = api_key_override
+    def __init__(self, override_api_key=True):
+        self._override_api_key = override_api_key
 
     def __call__(self, target_function):
         
@@ -400,12 +400,12 @@ class api_key_decorator(object):
             # `api_key_override` is unique to the decorator, it is deleted
             # from the `kwargs` before being passed to the `targetfunc`.)
             
-            api_key_override = self._api_key_override
-            if "api_key_override" in kwargs:
-                api_key_override = kwargs["api_key_override"]
+            override_api_key = self._override_api_key
+            if "override_api_key" in kwargs:
+                override_api_key = kwargs["api_key_override"]
                 del kwargs["api_key_override"]
             
-            if api_key_override and candidate_api_key:
+            if override_api_key and candidate_api_key:
                 api_key = candidate_api_key
             
             else:

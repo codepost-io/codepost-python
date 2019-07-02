@@ -4,20 +4,25 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+coveralls = "*"
+eliot-tree = "*"
+ipykernel = "*"
+pylint = "*"
 pytest = ">=4.4"
 pytest-cov = ">=2.6"
-coveralls = "*"
-tox = "*"
-PyYAML = "*"
-pylint = "*"
 pytest-subtests = "*"
-ipykernel = "*"
+PyYAML = "*"
+tox = "*"
 
 [packages]
-six = "*"
-requests = "*"
-PyYAML = "*"
+better-exceptions = "*"
+blessings = "*"
+colorama = "*"
+eliot = "*"
 python-forge = "*"
+PyYAML = "*"
+requests = "*"
+six = "*"
 typeguard = "*"
 codepost = {path = ".",editable = true}
 

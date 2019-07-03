@@ -66,7 +66,7 @@ from .misc import _make_f
 # =============================================================================
 
 # Global submodule constants
-_LOG_SCOPE = "codepost.config"
+_LOG_SCOPE = "{}".format(__name__)
 
 SETTINGS_URL = "https://codepost.io/settings"
 BASE_URL = "https://api.codepost.io/"

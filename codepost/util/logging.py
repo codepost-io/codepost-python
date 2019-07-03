@@ -27,7 +27,7 @@ from eliot import start_action, current_action, Action
 
 # Global submodule constants
 LOG_FILENAME = "codepost.log"
-LOG_DEFAULT_SCOPE = "codepost.logging"
+LOG_DEFAULT_SCOPE = "{}".format(__name__)
 LOG_FILE = open(LOG_FILENAME, "ab")
 
 # Global submodule protected attributes

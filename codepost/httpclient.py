@@ -39,6 +39,11 @@ from .util.misc import _make_f
 
 # =============================================================================
 
+# Replacement f"..." compatible with Python 2 and 3
+_f = _make_f(globals=lambda: globals(), locals=lambda: locals())
+
+# =============================================================================
+
 # Global submodule constants
 _LOG_SCOPE = "{}".format(__name__)
 
@@ -46,9 +51,6 @@ _LOG_SCOPE = "{}".format(__name__)
 _logger = _logging.get_logger(name=_LOG_SCOPE)
 
 # =============================================================================
-
-# Replacement f"..." compatible with Python 2 and 3
-_f = _make_f(globals=lambda: globals(), locals=lambda: locals())
 
 class HTTPResponse(dict):
 
@@ -173,7 +175,7 @@ class HTTPClient(object):
             if content:
                 if type(content) is bytes:
                     content = content.decode("utf8")
-            
+
             resp_dict["content"] = content
             resp_dict["status_code"] = ret.status_code
             resp_dict["headers"] = _copy.deepcopy(dict(ret.headers))

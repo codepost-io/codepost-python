@@ -1,3 +1,4 @@
+from codepost import __version__
 from setuptools import setup, find_packages
 
 # The text of the README file
@@ -6,7 +7,7 @@ README = open("README.md").read()
 # This call to setup() does all the work
 setup(
     name="codepost",
-    version="0.1.0",
+    version=__version__,
     description="Python bindings for the codePost API",
     long_description=README,
     long_description_content_type="text/markdown",

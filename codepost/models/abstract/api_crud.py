@@ -36,8 +36,7 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         _class_type = type(self)
         
         # FIXME: do kwargs validation
-        
-        data = dict(self)
+        data = dict(getattr(self, "_data", dict()))
         data.update(_copy.deepcopy(kwargs))
         
         ret = self._requestor._request(

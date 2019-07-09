@@ -25,7 +25,6 @@ class Comments(
     _OBJECT_NAME = "comments"
     _FIELD_ID = "id"
     _FIELDS = {
-        'id': (int, 'Unique identifier for the object.'),
         'text': (str,
         'The text of the comment. This text will be shown to both graders and students.'),
         'pointDelta': (int,

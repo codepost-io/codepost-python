@@ -192,5 +192,6 @@ def handle_api_error(status_code, response, message=None, **kwargs):
             raise exception(message=message, response=response, **kwargs)
     
     # Default API error
-    raise APIError(message=message, response=response, **kwargs)
+    if status_code >= 400:
+        raise APIError(message=message, response=response, **kwargs)
 

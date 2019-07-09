@@ -25,7 +25,6 @@ class Submissions(
     _OBJECT_NAME = "submissions"
     _FIELD_ID = "id"
     _FIELDS = {
-        'id': (int, 'Unique identifier for the object.'),
         'assignment': (int, 'The assignment this submission corresponds to.'),
         'students': (object,
         "A list of the students who worked on this submission. A student can have at most one submission per assignment. These users must also be active students in the submission's course. Every submission must have at least 1 student."),

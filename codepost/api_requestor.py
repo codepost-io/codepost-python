@@ -37,7 +37,7 @@ import requests as _requests
 import codepost
 
 from . import __version__ as _CODEPOST_SDK_VERSION
-from . import httpclient as _httpclient
+from . import http_client as _http_client
 from . import errors as _errors
 
 from .util import config as _config
@@ -92,9 +92,9 @@ class APIRequestor(object):
         
         _config.validate_api_key(self._api_key, log_outcome=True)
         
-        if not isinstance(self._client, _httpclient.HTTPClient):
+        if not isinstance(self._client, _http_client.HTTPClient):
             # Reinitialize a default HTTPClient
-            self._client = _httpclient.HTTPClient(**kwargs)
+            self._client = _http_client.HTTPClient(**kwargs)
     
     @classmethod
     def _format_app_info(cls, **kwargs):

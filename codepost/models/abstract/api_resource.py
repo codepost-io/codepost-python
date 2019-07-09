@@ -36,7 +36,7 @@ import requests as _requests
 # Local imports
 import codepost
 import codepost.util.logging as _logging
-import codepost.apirequestor as _apirequestor
+import codepost.api_requestor as _api_requestor
 
 # =============================================================================
 
@@ -61,8 +61,8 @@ class APIResource(object):
 
     def __init__(self, requestor=None, **kwargs):
         self._requestor = requestor
-        if not isinstance(self._requestor, _apirequestor.APIRequestor):
-            self._requestor = _apirequestor.APIRequestor()
+        if not isinstance(self._requestor, _api_requestor.APIRequestor):
+            self._requestor = _api_requestor.APIRequestor()
         
         # Initialize dictionary fields
         _fields = getattr(self, "_FIELDS", list())

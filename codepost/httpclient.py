@@ -52,26 +52,39 @@ _logger = _logging.get_logger(name=_LOG_SCOPE)
 
 # =============================================================================
 
-class HTTPResponse(dict):
+class HTTPResponse(object):
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, response=None):
+
+        self._data = getattr(self, "_data", dict())
+
         if data:
             try:
-                self.update(data)
+                self._data.update(data)
             except:
                 pass
+            
+        self._response = response
     
     @property
+    def response(self):
+        return self._response
+
+    @property
+    def url(self):
+        return self._data.get("url", "")
+
+    @property
     def status_code(self):
-        return self.get("status_code", 200)
+        return self._data.get("status_code", 200)
 
     @property
     def content(self):
-        return self.get("content", None)
+        return self._data.get("content", None)
     
     @property
     def json(self):
-        content_str = self.get("content", None)
+        content_str = self._data.get("content", None)
         if content_str:
             try:
                 content_json = _json.loads(content_str)
@@ -81,7 +94,7 @@ class HTTPResponse(dict):
     
     @property
     def headers(self):
-        return _copy.deepcopy(self.get("headers", None))
+        return _copy.deepcopy(self._data.get("headers", None))
 
 class HTTPClient(object):
 
@@ -131,33 +144,43 @@ class HTTPClient(object):
         return self._local_thread.session
     
     @_logging.log_call
-    def request(self, url, method="GET", headers=None, data=None, **kwargs):
+    def request(self, url, method="GET", headers=None, **kwargs):
         
-        extra_kwargs = {}
+        kws = {}
 
         # Calculate extra keyword arguments
         kwargs["verify"] = self._verify_ssl
         kwargs["proxies"] = self._proxy
 
         # Provided arguments override the calculated ones
-        extra_kwargs.update(self._kwargs)
-        extra_kwargs.update(kwargs)
+        kws.update(self._kwargs)
+        kws.update(kwargs)
 
         session = self._get_session()
         resp_dict = {}
-
+        
+        log_action = _logging.start_action(
+            action_type="requests.session.request",
+            session=session.__repr__(),
+            method=method,
+            url=url,
+            headers=headers,
+            kwargs=kws,
+            )
         try:
-            
+
             ret = None
             try:
-                ret = session.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    data=data,
-                    **extra_kwargs,
-                )
+                with log_action.context():
+                    ret = session.request(
+                        method=method,
+                        url=url,
+                        headers=headers,
+                        **kws,
+                    )
+                    log_action.add_success_fields(status_code=ret.status_code)
             except TypeError as e:
+                log_action.finish(exception=e)
                 raise TypeError(
                     """
                     The `requests` library is not functioning as expected.
@@ -178,15 +201,20 @@ class HTTPClient(object):
 
             resp_dict["content"] = content
             resp_dict["status_code"] = ret.status_code
+            resp_dict["url"] = ret.url
             resp_dict["headers"] = _copy.deepcopy(dict(ret.headers))
 
         except Exception as e:
-
+            log_action.finish(exception=e)
             self._handle_request_error(e)
 
-        return HTTPResponse(data=resp_dict)
+        log_action.finish()
+
+        return HTTPResponse(data=resp_dict, response=ret)
 
     def _handle_request_error(self, e):
+        # Meant to handle HTTP/socket-level errors
+        # API errors are handled in APIRequestor
         raise e
 
     def close(self):

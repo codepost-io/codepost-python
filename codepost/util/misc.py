@@ -114,7 +114,11 @@ def _make_f(globals, locals):
         # Make the substitution if the string provided is not empty
         if s:
             try:
-                return s.format(**kwargs, **g, **l)
+                # Make two substitutions for patterns who unspool their
+                # own substitutions (the missing key will be captured)
+                temp = s.format(**kwargs, **g, **l)
+                temp = temp.format(**kwargs, **g, **l)
+                return temp
             except KeyError as err:
                 missing_key = err.args[0]
                 missing_key_val = None
@@ -144,8 +148,8 @@ def _make_f(globals, locals):
                 )
             except ValueError:
                 raise
-            except:
-                pass
+            #except:
+            #    pass
     
     return _f
 

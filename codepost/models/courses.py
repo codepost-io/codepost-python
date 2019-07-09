@@ -10,7 +10,7 @@ from __future__ import print_function # Python 2
 import typing as _typing
 
 # Local imports
-import abstract as _abstract
+from . import abstract as _abstract
 
 # =============================================================================
 

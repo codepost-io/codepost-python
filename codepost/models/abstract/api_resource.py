@@ -125,5 +125,6 @@ class APIResource(AbstractAPIResource):
     def __repr__(self):
         if getattr(self, "_data", None):
             return self._data.__repr__()
+        return dict().__repr__()
 
 # =============================================================================

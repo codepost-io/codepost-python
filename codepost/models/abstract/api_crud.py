@@ -50,7 +50,7 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
 
 # =============================================================================
 
-class ReadableAPIResource(AbstractAPIResource):
+class ReadableAPIResource(_api_resource.AbstractAPIResource):
     
     def retrieve(self, id, **kwargs):
         _class_type = type(self)
@@ -64,7 +64,7 @@ class ReadableAPIResource(AbstractAPIResource):
 
 # =============================================================================
 
-class UpdatableAPIResource(AbstractAPIResource):
+class UpdatableAPIResource(_api_resource.AbstractAPIResource):
     
     def update(self, id, **kwargs):
         _class_type = type(self)
@@ -78,7 +78,7 @@ class UpdatableAPIResource(AbstractAPIResource):
 
 # =============================================================================
 
-class DeletableAPIResource(AbstractAPIResource):
+class DeletableAPIResource(_api_resource.AbstractAPIResource):
     
     def delete(self, id, **kwargs):
         ret = self._requestor._request(

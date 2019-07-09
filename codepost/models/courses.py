@@ -1,3 +1,19 @@
+# =============================================================================
+# codePost v2.0 SDK
+#
+# ASSIGNMENT MODEL SUB-MODULE
+# =============================================================================
+
+from __future__ import print_function # Python 2
+
+# Python stdlib imports
+import typing as _typing
+
+# Local imports
+import abstract as _abstract
+
+# =============================================================================
+
 class Courses(object):
     _OBJECT_NAME = "courses"
     _FIELD_ID = "id"
@@ -15,3 +31,5 @@ class Courses(object):
     }
     _FIELDS_READ_ONLY = [ ]
     _FIELDS_REQUIRED = [ "name", "period" ]
+
+# =============================================================================

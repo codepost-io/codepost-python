@@ -48,9 +48,31 @@ _logger = _logging.get_logger(name=_LOG_SCOPE)
 
 # =============================================================================
 
-class APIResource(object):
+class AbstractAPIResource(object):
     """
     Abstract class type for a codePost API resource.
+    """
+
+    _data = dict()
+    _requestor = _api_requestor.APIRequestor()
+    
+    @property
+    def class_endpoint(self):
+        raise NotImplementedError("abstract class not meant to be used")
+    
+    @property
+    def instance_endpoint(self):
+        raise NotImplementedError("abstract class not meant to be used")
+    
+    def instance_endpoint_by_id(self, id=None):
+        raise NotImplementedError("abstract class not meant to be used")
+
+# =============================================================================
+
+class APIResource(AbstractAPIResource):
+    """
+    Base class type that allows for the storage and manipulation of a codePost
+    API resource.
     """
 
     # Class constants

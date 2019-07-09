@@ -1,4 +1,27 @@
-class Assignments(object):
+# =============================================================================
+# codePost v2.0 SDK
+#
+# ASSIGNMENT MODEL SUB-MODULE
+# =============================================================================
+
+from __future__ import print_function # Python 2
+
+# Python stdlib imports
+import typing as _typing
+
+# Local imports
+import abstract as _abstract
+
+# =============================================================================
+
+class Assignments(
+    _abstract.APIResource,
+    _abstract.CreatableAPIResource,
+    _abstract.ReadableAPIResource,
+    _abstract.UpdatableAPIResource,
+    _abstract.DeletableAPIResource,
+    metaclass=_abstract.APIResourceMetaclass
+):
     _OBJECT_NAME = "assignments"
     _FIELD_ID = "id"
     _FIELDS = {
@@ -21,3 +44,5 @@ class Assignments(object):
     }
     _FIELDS_READ_ONLY = [ "rubricCategories", "mean", "median" ]
     _FIELDS_REQUIRED = [ "name", "points", "course" ]
+
+# =============================================================================

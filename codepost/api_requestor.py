@@ -151,22 +151,6 @@ class APIRequestor(object):
         _errors.handle_api_error(
             status_code=response.status_code,
             response=response)
-        return
-        # Meant to handle API-level erros
-        if response.status_code == 500:
-            raise _errors.UnknownAPIError(response=response)
-        
-        elif response.status_code == 404:
-            raise _errors.NotFoundAPIError(response=response)
-        
-        elif response.status_code == 403:
-            raise _errors.AuthorizationAPIError(response=response)
-        
-        elif response.status_code == 401:
-            raise _errors.AuthenticationAPIError(response=response)
-        
-        elif response.status_code == 400:
-            raise _errors.BadRequestAPIError(response=response)
 
     def _request(self, endpoint, method="get", **kwargs):
         kws = {}

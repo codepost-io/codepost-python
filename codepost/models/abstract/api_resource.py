@@ -79,7 +79,7 @@ class APIResource(AbstractAPIResource):
     _FIELD_ID = "id"
 
     # Class attributes
-    _data = dict()
+    _data = None
 
     def __init__(self, requestor=None, **kwargs):
         self._requestor = requestor
@@ -95,6 +95,8 @@ class APIResource(AbstractAPIResource):
             _fields.append(self._FIELD_ID)
         
         self._data = getattr(self, "_data", dict())
+        if not self._data:
+            self._data = dict()
         
         for key in kwargs.keys():
             if key in _fields:

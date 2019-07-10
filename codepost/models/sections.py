@@ -27,8 +27,8 @@ class Sections(
     _FIELDS = {
         'name': (str, 'The name of the section.'),
         'course': (int, 'ID of the Course which this Section belongs to.'),
-        'leaders': (object, 'The graders who lead this section.'),
-        'students': (object, 'The student members of this section.')
+        'leaders': (_typing.List, 'The graders who lead this section.'),
+        'students': (_typing.List, 'The student members of this section.')
     }
     _FIELDS_READ_ONLY = []
     _FIELDS_REQUIRED = [ "name", "course", "leaders", "students" ]

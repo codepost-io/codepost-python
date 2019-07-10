@@ -26,7 +26,7 @@ class Submissions(
     _FIELD_ID = "id"
     _FIELDS = {
         'assignment': (int, 'The assignment this submission corresponds to.'),
-        'students': (object,
+        'students': (_typing.List,
         "A list of the students who worked on this submission. A student can have at most one submission per assignment. These users must also be active students in the submission's course. Every submission must have at least 1 student."),
         'grader': (str,
         "The grader assigned to grade this submission, specified by email. This user must be an active grader in the submission's course. If submission.isFinalized == True, then this field cannot be null"),
@@ -38,7 +38,7 @@ class Submissions(
         "The time when this object was last edited. Edits include changes to the submission's fields and any updates or additions to child objects (such as a File or Comment)."),
         'grade': (int,
         'Integer value specifying the number of points earned by the submission, accounting for all linked Comments and Rubric Comments. This field is calculated by the codePost API whenever the submission is finalized.'),
-        'files': (object, "A list of the submission's file IDs.")
+        'files': (_typing.List, "A list of the submission's file IDs.")
     }
     _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files" ]
     _FIELDS_REQUIRED = [ "assignment", "students" ]

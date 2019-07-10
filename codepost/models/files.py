@@ -31,7 +31,7 @@ class Files(
         'extension': (str,
         "The file extension. This field determines how the File's code will be syntax-highlighted."),
         'submission': (int, "The ID of the file's parent Submission."),
-        'comments': (object, 'The IDs of all comments applied to this file.')
+        'comments': (_typing.List, 'The IDs of all comments applied to this file.')
     }
     _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files" ]
     _FIELDS_REQUIRED = [ "name", "code", "extension", "submission" ]

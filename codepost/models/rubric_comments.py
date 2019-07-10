@@ -33,7 +33,7 @@ class RubricComments(
         'ID of the Rubric Category which this rubric comment is a part of.'),
         'sortKey': (int,
         'The key which determines how rubric comments are sorted within a Rubric Category in the codePost UI. Low keys are shown first.'),
-        'comments': (object,
+        'comments': (_typing.List,
         'The IDs of Comments which reference this rubric comment; these can be thought of as "instances" of the rubric comment.')
     }
     _FIELDS_READ_ONLY = [ "comments" ]

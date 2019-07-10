@@ -68,7 +68,7 @@ class APIError(TemplatedRuntimeError):
     Unspecified run-time error with the codePost API, as reported by an HTTP
     status code.
     """
-
+    
     STATUS_CODE = None
 
     DEFAULT_MESSAGE = "codePost API Runtime Error."
@@ -188,7 +188,20 @@ class AuthorizationAPIError(APIError):
         """
 
 class BadRequestAPIError(APIError):
+    """
+    API run-time error due to a bad request. This can have a variety of causes,
+    including but not limited to:
+
+    - missing fields (for each API resource, some fields are required);
+
+    - unexpected fields (additional fields provided which do not belong to the
+      resource being accessed);
+
+    - duplicate object (attempting to create an object which already exists).
+    """
+
     STATUS_CODE = [400]
+
     DEFAULT_MESSAGE = """
         BAD REQUEST ERROR (API-level codePost Error).
         {RESPONSE_TEMPLATE}

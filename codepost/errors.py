@@ -42,9 +42,17 @@ _ERROR_NONFIELD = "non_field_errors"
 # =============================================================================
 
 class TemplatedRuntimeError(RuntimeError):
+    """
+    Generic unspecified run-time error within the codePost SDK, of which the
+    default message is specified by the class attribute `DEFAULT_MESSAGE`.
+    """
+
     DEFAULT_MESSAGE = "codePost Runtime Error."
 
     def __init__(self, message=None, **kwargs):
+        """
+        Initialize the run-time error, optionally with a specific message.
+        """
         if message == None:
             message = _f(
                 s=self.DEFAULT_MESSAGE,
@@ -53,8 +61,16 @@ class TemplatedRuntimeError(RuntimeError):
 
         super(TemplatedRuntimeError, self).__init__(message)
 
+# =============================================================================
+
 class APIError(TemplatedRuntimeError):
+    """
+    Unspecified run-time error with the codePost API, as reported by an HTTP
+    status code.
+    """
+
     STATUS_CODE = None
+
     DEFAULT_MESSAGE = "codePost API Runtime Error."
 
     def __init__(self, message=None, response=None, **kwargs):
@@ -75,35 +91,15 @@ class APIError(TemplatedRuntimeError):
         if self._response:
             return self._response.status_code
 
-class APIError2(RuntimeError):
-    STATUS_CODE = None
-    DEFAULT_MESSAGE = "codePost API Error."
-
-    def __init__(self, message=None, response=None, **kwargs):
-        if message == None:
-            message = _f(
-                s=self.DEFAULT_MESSAGE,
-                response=response,
-                **kwargs
-            )
-
-        super(APIError, self).__init__(message)
-
-        self._response = response
-    
-    @property
-    def response(self):
-        return self._response
-    
-    @property
-    def status_code(self):
-        if self._response:
-            return self._response.status_code
-
 # =============================================================================
 
 class UnknownAPIError(APIError):
+    """
+    Unknown server-side API run-time error.
+    """
+
     STATUS_CODE = [500]
+
     DEFAULT_MESSAGE = """
         UNKNOWN SERVER ERROR (API-level codePost Error).
         {RESPONSE_TEMPLATE}
@@ -117,7 +113,13 @@ class UnknownAPIError(APIError):
         """
 
 class NotFoundAPIError(APIError):
+    """
+    API run-time error due to an attempt to access a resource (course,
+    assignment, submission, etc.) that does not exist.
+    """
+
     STATUS_CODE = [404]
+
     DEFAULT_MESSAGE = """
         API RESOURCE DOES NOT EXIST (API-level codePost Error).
         {RESPONSE_TEMPLATE}
@@ -129,7 +131,12 @@ class NotFoundAPIError(APIError):
         """
 
 class AuthenticationAPIError(APIError):
+    """
+    API run-time error due to a missing, expired or invalid API key.
+    """
+
     STATUS_CODE = [401]
+
     DEFAULT_MESSAGE = """
         INVALID TOKEN, AUTHENTICATION ERROR (API-level codePost Error).
         {RESPONSE_TEMPLATE}
@@ -159,7 +166,14 @@ class AuthenticationAPIError(APIError):
         """
 
 class AuthorizationAPIError(APIError):
+    """
+    API run-time error due to a valid API key which does not have the required
+    permissions to access/alter the specified resource (course, assignment,
+    submission, etc.).
+    """
+
     STATUS_CODE = [403]
+
     DEFAULT_MESSAGE = """
         AUTHORIZATION ERROR (API-level codePost Error).
         {RESPONSE_TEMPLATE}
@@ -231,13 +245,31 @@ def handle_api_error(status_code, response, message=None, **kwargs):
 # =============================================================================
 
 class StaticObjectError(TemplatedRuntimeError):
+    """
+    Run-time error due to a static API object being used as an instantiated API
+    object. Only use the `create`, `retrieve`, `update` and `delete` methods on
+    top-level `codepost.*` objects.
+    """
+
     DEFAULT_MESSAGE = """
         STATIC OBJECT ERROR.
         You are trying to use a static API object as though it were an instance
         object. Please either create or retrieve an instance object, or only
-        use static API method calls.
+        use static API method calls (that is the `create`, `retrieve`, `update`
+        and `delete` methods on top-level `codepost.*` objects.)
 
         {SUPPORT_MESSAGE}
+        """
+
+# =============================================================================
+
+class UploadError(TemplatedRuntimeError):
+    """
+    Run-time error related to the upload of a submission.
+    """
+
+    DEFAULT_MESSAGE = """
+        UPLOAD ERROR.
         """
 
 # =============================================================================

@@ -54,6 +54,9 @@ class Assignments(
     _FIELDS_REQUIRED = [ "name", "points", "course" ]
 
     def list_submissions(self, id=None):
+        """
+        Returns the list of submissions associated with an assignment.
+        """
         _class_type = type(self)
 
         id = self._get_id(id=id)

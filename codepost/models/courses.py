@@ -37,15 +37,40 @@ class Courses(
     _FIELDS_READ_ONLY = [ ]
     _FIELDS_REQUIRED = [ "name", "period" ]
 
-    def list_courses(self):
+    def list_available(self, name=None, period=None):
+        """
+        Returns the list of all courses that the authenticated user (as
+        identified by the API key) has administrative access to.
+
+        Optionally, it is possible to filter courses according to their `name`
+        and/or `period`.
+
+        If you are unable to retrieve a course that you should have access to,
+        you may either not be using the right API key, or you may not have
+        properly set the API key, i.e.,
+            `codepost.configure_api_key(api_key=...)`
+        """
         _class_type = type(self)
 
         ret = self._requestor._request(
             endpoint=self.class_endpoint,
             method="GET",
         )
+        
         if ret.status_code == 200:
             # Returns a list of courses
-            return list(map(lambda kwargs: _class_type(**kwargs), ret.json))
+            course_list = list(map(lambda kws: _class_type(**kws), ret.json))
+
+            # Optionally filter according to the `name` parameter
+            if name:
+                course_list = filter(lambda c: c.name == name, course_list)
+
+            # Optionally filter according to the `period` parameter
+            if period:
+                course_list = filter(lambda c: c.period == period, course_list)
+            
+            return course_list
+        
+        return []
 
 # =============================================================================

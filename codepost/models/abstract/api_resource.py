@@ -81,8 +81,7 @@ class AbstractAPIResource(object):
 
 class APIResource(AbstractAPIResource):
     """
-    Base class type that allows for the storage and manipulation of a codePost
-    API resource.
+    Base class type to store and manipulate a codePost API resource.
     """
 
     # Class constants

@@ -46,6 +46,21 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         )
         if ret.status_code == 201:
             return _class_type(**ret.json)
+    
+    def saveInstanceAsNew(self, **kwargs):
+        obj = self.create(**kwargs)
+
+        # Sanity check
+        assert (
+            getattr(self, "_OBJECT_NAME", "") == 
+            getattr(obj, "_OBJECT_NAME", ""))
+
+        self._data = obj._data
+
+        return self
+
+        
+
 
 # =============================================================================
 
@@ -60,6 +75,25 @@ class ReadableAPIResource(_api_resource.AbstractAPIResource):
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)
+    
+    def refreshInstance(self, id=None, **kwargs):
+        # Figure out what ID to use
+        id = self._get_id(id=id)
+        if id == None:
+            return
+        
+        obj = self.retrieve(id=id, **kwargs)
+
+        # Sanity check
+        assert (
+            getattr(self, "_OBJECT_NAME", "") == 
+            getattr(obj, "_OBJECT_NAME", ""))
+
+        self._data = obj._data
+
+        return self
+
+
 
 # =============================================================================
 
@@ -74,6 +108,23 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)
+    
+    def saveInstance(self, id=None, **kwargs):
+        # Figure out what ID to use
+        id = self._get_id(id=id)
+        if id == None:
+            return
+        
+        obj = self.update(id=id, **kwargs)
+
+        # Sanity check
+        assert (
+            getattr(self, "_OBJECT_NAME", "") == 
+            getattr(obj, "_OBJECT_NAME", ""))
+
+        self._data = obj._data
+
+        return self
 
 # =============================================================================
 
@@ -86,6 +137,14 @@ class DeletableAPIResource(_api_resource.AbstractAPIResource):
             **kwargs
         )
         return (ret.status_code == 204)
+    
+    def deleteInstance(self, id=None, **kwargs):
+        # Figure out what ID to use
+        id = self._get_id(id=id)
+        if id == None:
+            return
+        
+        return self.delete(id=id, **kwargs)
 
 # =============================================================================
 

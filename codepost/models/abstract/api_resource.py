@@ -56,6 +56,9 @@ class AbstractAPIResource(object):
     _data = dict()
     _requestor = _api_requestor.APIRequestor()
     
+    def _get_id(self, id=None):
+        raise NotImplementedError("abstract class not meant to be used")
+
     @property
     def class_endpoint(self):
         raise NotImplementedError("abstract class not meant to be used")
@@ -102,10 +105,18 @@ class APIResource(AbstractAPIResource):
             if key in _fields:
                 self._data[key] = kwargs[key]
     
+    def _get_id(self, id=None):
+        if id == None:
+            data = getattr(self, "_data", None)
+            if data and "id" in data and data["id"]:
+                id = data["id"]
+        return id
+
     @property
     def class_endpoint(self):
         classname = getattr(self, "_OBJECT_NAME", "")
         if classname:
+            classname = classname.replace("..", "/{}/")
             classname = classname.replace(".", "/")
             endpoint = "/{}/".format(classname)
             return endpoint
@@ -114,6 +125,12 @@ class APIResource(AbstractAPIResource):
         if id == None and getattr(self, "_data", None):
             id = self._data.get("id", None)
         if id:
+            try:
+                tmp = self.class_endpoint.format(id)
+                if tmp != self.class_endpoint:
+                    return tmp
+            except IndexError: # means formatting didn't work
+                pass
             return urljoin(self.class_endpoint, str(id))
     
     @property

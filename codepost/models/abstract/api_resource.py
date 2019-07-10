@@ -35,8 +35,9 @@ import requests as _requests
 
 # Local imports
 import codepost
-import codepost.util.logging as _logging
 import codepost.api_requestor as _api_requestor
+import codepost.errors as _errors
+import codepost.util.logging as _logging
 
 # =============================================================================
 
@@ -57,6 +58,12 @@ class AbstractAPIResource(object):
     _requestor = _api_requestor.APIRequestor()
     
     def _get_id(self, id=None):
+        raise NotImplementedError("abstract class not meant to be used")
+    
+    def _get_extended_data(self, **kwargs):
+        raise NotImplementedError("abstract class not meant to be used")
+    
+    def _validate_data(self, data, required=True):
         raise NotImplementedError("abstract class not meant to be used")
 
     @property
@@ -83,8 +90,12 @@ class APIResource(AbstractAPIResource):
 
     # Class attributes
     _data = None
+    _field_names = None
+    _static = False
 
-    def __init__(self, requestor=None, **kwargs):
+    def __init__(self, requestor=None, static=False, **kwargs):
+
+        # Initialize requestor
         self._requestor = requestor
         if not isinstance(self._requestor, _api_requestor.APIRequestor):
             self._requestor = _api_requestor.APIRequestor()
@@ -96,21 +107,52 @@ class APIResource(AbstractAPIResource):
             _fields = list(_fields.keys())
         if getattr(self, "_FIELD_ID", ""):
             _fields.append(self._FIELD_ID)
+        self._field_names = _fields
         
-        self._data = getattr(self, "_data", dict())
-        if not self._data:
-            self._data = dict()
+        self._static = static
+
+        if not self._static:
+            self._data = getattr(self, "_data", dict())
+            if not self._data:
+                self._data = dict()
         
         for key in kwargs.keys():
-            if key in _fields:
+            if key in self._field_names:
                 self._data[key] = kwargs[key]
     
     def _get_id(self, id=None):
+        if self._static:
+            raise _errors.StaticObjectError()
+        
         if id == None:
             data = getattr(self, "_data", None)
-            if data and "id" in data and data["id"]:
+            if isinstance(data, dict) and "id" in data and data["id"]:
                 id = data["id"]
+        
         return id
+    
+    def _validate_data(self, data, required=True):
+        return True
+
+    def _get_extended_data(self, **kwargs):
+        data = dict()
+        
+        # If this is a static object, we should ignore self._data
+        if not self._static and isinstance(self._data, dict):
+            # Combine instance data and extended (typically kwargs) argument
+            data.update(_copy.deepcopy(self._data))
+
+        if kwargs:
+            data.update(_copy.deepcopy(kwargs))
+        
+        # Remove extraneous data
+        new_data = {
+            key : data[key]
+            for key in data.keys()
+            if key in self._field_names
+        }
+        
+        return new_data
 
     @property
     def class_endpoint(self):

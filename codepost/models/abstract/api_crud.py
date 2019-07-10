@@ -36,8 +36,7 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         _class_type = type(self)
         
         # FIXME: do kwargs validation
-        data = dict(getattr(self, "_data", dict()))
-        data.update(_copy.deepcopy(kwargs))
+        data = self._get_extended_data(**kwargs)
         
         ret = self._requestor._request(
             endpoint=self.class_endpoint,
@@ -66,23 +65,19 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
 
 class ReadableAPIResource(_api_resource.AbstractAPIResource):
     
-    def retrieve(self, id, **kwargs):
+    def retrieve(self, id):
         _class_type = type(self)
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=id),
             method="GET",
-            **kwargs
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)
     
-    def refreshInstance(self, id=None, **kwargs):
-        # Figure out what ID to use
-        id = self._get_id(id=id)
-        if id == None:
-            return
+    def refreshInstance(self):
+        id = self._get_id()
         
-        obj = self.retrieve(id=id, **kwargs)
+        obj = self.retrieve(id=id)
 
         # Sanity check
         assert (
@@ -101,20 +96,20 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
     
     def update(self, id, **kwargs):
         _class_type = type(self)
+
+        # FIXME: do kwargs validation
+        data = self._get_extended_data(**kwargs)
+
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=id),
             method="PATCH",
-            **kwargs
+            data=data,
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)
     
-    def saveInstance(self, id=None, **kwargs):
-        # Figure out what ID to use
-        id = self._get_id(id=id)
-        if id == None:
-            return
-        
+    def saveInstance(self, **kwargs):
+        id = self._get_id()
         obj = self.update(id=id, **kwargs)
 
         # Sanity check
@@ -130,21 +125,16 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
 
 class DeletableAPIResource(_api_resource.AbstractAPIResource):
     
-    def delete(self, id, **kwargs):
+    def delete(self, id):
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=id),
             method="DELETE",
-            **kwargs
         )
         return (ret.status_code == 204)
     
-    def deleteInstance(self, id=None, **kwargs):
-        # Figure out what ID to use
-        id = self._get_id(id=id)
-        if id == None:
-            return
-        
-        return self.delete(id=id, **kwargs)
+    def deleteInstance(self):
+        id = self._get_id()
+        return self.delete(id=id)
 
 # =============================================================================
 

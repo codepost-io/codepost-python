@@ -41,8 +41,41 @@ _ERROR_NONFIELD = "non_field_errors"
 
 # =============================================================================
 
+class TemplatedRuntimeError(RuntimeError):
+    DEFAULT_MESSAGE = "codePost Error."
 
-class APIError(RuntimeError):
+    def __init__(self, message=None, **kwargs):
+        if message == None:
+            message = _f(
+                s=self.DEFAULT_MESSAGE,
+                **kwargs
+            )
+
+        super(TemplatedRuntimeError, self).__init__(message)
+
+class APIError(TemplatedRuntimeError):
+    STATUS_CODE = None
+    DEFAULT_MESSAGE = "codePost API Error."
+
+    def __init__(self, message=None, response=None, **kwargs):
+        super(APIError, self).__init__(
+            message=message,
+            response=response,
+            **kwargs
+        )
+
+        self._response = response
+    
+    @property
+    def response(self):
+        return self._response
+    
+    @property
+    def status_code(self):
+        if self._response:
+            return self._response.status_code
+
+class APIError2(RuntimeError):
     STATUS_CODE = None
     DEFAULT_MESSAGE = "codePost API Error."
 
@@ -194,4 +227,19 @@ def handle_api_error(status_code, response, message=None, **kwargs):
     # Default API error
     if status_code >= 400:
         raise APIError(message=message, response=response, **kwargs)
+
+# =============================================================================
+
+
+class StaticObjectError(TemplatedRuntimeError):
+    DEFAULT_MESSAGE = """
+        STATIC OBJECT ERROR.
+        You are trying to use a static API object as though it were an instance
+        object. Please either create or retrieve an instance object, or only
+        use static API method calls.
+
+        {SUPPORT_MESSAGE}
+        """
+
+# =============================================================================
 

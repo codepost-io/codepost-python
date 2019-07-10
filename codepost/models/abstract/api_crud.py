@@ -31,12 +31,19 @@ _logger = _logging.get_logger(name=_LOG_SCOPE)
 # =============================================================================
 
 class CreatableAPIResource(_api_resource.AbstractAPIResource):
+    """
+    Abstract class for API resources which can be created (Crud).
+    """
     
     def create(self, **kwargs):
+        """
+        Create an API resource with the provided field parameters, and return
+        it as an object.
+        """
         _class_type = type(self)
         
         # FIXME: do kwargs validation
-        data = self._get_extended_data(**kwargs)
+        data = self._get_data_and_extend(**kwargs)
         
         ret = self._requestor._request(
             endpoint=self.class_endpoint,
@@ -47,6 +54,12 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
             return _class_type(**ret.json)
     
     def saveInstanceAsNew(self, **kwargs):
+        """
+        Create a duplicate of the instantiated API resource. If allowed, this
+        will make a call to create a new API resource with identical fields but
+        a new ID, and it will update the internal state of the object as well
+        as return the new object.
+        """
         obj = self.create(**kwargs)
 
         # Sanity check
@@ -64,9 +77,16 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
 # =============================================================================
 
 class ReadableAPIResource(_api_resource.AbstractAPIResource):
+    """
+    Abstract class for API resources which can be read (cRud).
+    """
     
     def retrieve(self, id):
+        """
+        Retrieve an API resource with the provided `id`.
+        """
         _class_type = type(self)
+
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=id),
             method="GET",
@@ -75,6 +95,11 @@ class ReadableAPIResource(_api_resource.AbstractAPIResource):
             return _class_type(**ret.json)
     
     def refreshInstance(self):
+        """
+        Refresh the existing instantiated API resource. This will make a call
+        to retrieve the API resource with the same ID as the current instance
+        and it will update the internal state of the object.
+        """
         id = self._get_id()
         
         obj = self.retrieve(id=id)
@@ -88,17 +113,21 @@ class ReadableAPIResource(_api_resource.AbstractAPIResource):
 
         return self
 
-
-
 # =============================================================================
 
 class UpdatableAPIResource(_api_resource.AbstractAPIResource):
+    """
+    Abstract class for API resources which can be updated (crUd).
+    """
     
     def update(self, id, **kwargs):
+        """
+        Update an API resource provided its `id` and fields to modify.
+        """
         _class_type = type(self)
 
         # FIXME: do kwargs validation
-        data = self._get_extended_data(**kwargs)
+        data = self._get_data_and_extend(**kwargs)
 
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=id),
@@ -109,6 +138,10 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
             return _class_type(**ret.json)
     
     def saveInstance(self, **kwargs):
+        """
+        Update the instance of the API resource so as to save all recently
+        modified fields.
+        """
         id = self._get_id()
         obj = self.update(id=id, **kwargs)
 
@@ -124,8 +157,14 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
 # =============================================================================
 
 class DeletableAPIResource(_api_resource.AbstractAPIResource):
+    """
+    Abstract class for API resources which can be deleted (cruD).
+    """
     
     def delete(self, id):
+        """
+        Delete an API resource provided its `id`.
+        """
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=id),
             method="DELETE",
@@ -133,6 +172,9 @@ class DeletableAPIResource(_api_resource.AbstractAPIResource):
         return (ret.status_code == 204)
     
     def deleteInstance(self):
+        """
+        Delete the API resource of which this object is an instance.
+        """
         id = self._get_id()
         return self.delete(id=id)
 

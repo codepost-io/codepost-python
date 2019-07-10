@@ -10,11 +10,17 @@ from __future__ import print_function # Python 2
 import copy as _copy
 import functools as _functools
 import textwrap as _textwrap
+import typing as _typing
 
 # External dependencies
 import better_exceptions as _better_exceptions
+try:
+    import forge as _forge
+except ImportError: # pragma: no cover
+    pass
 
 # Local imports
+import codepost.errors as _errors
 import codepost.util.logging as _logging
 import codepost.api_requestor as _api_requestor
 
@@ -29,6 +35,9 @@ _logger = _logging.get_logger(name=_LOG_SCOPE)
 # =============================================================================
 
 class APIResourceMetaclass(type):
+    """
+    Metaclass to configure abstract codePost model classes.
+    """
     
     def __getid(cls):
         id_field_name = getattr(cls, "_FIELD_ID", "id")
@@ -37,7 +46,8 @@ class APIResourceMetaclass(type):
         
         # If no identifier, raise exception
         if id == None:
-            raise AttributeError("No identifier, as resource is not instantiated.")
+            raise _errors.StaticObjectError()
+            #raise AttributeError("No identifier, as resource is not instantiated.")
             
         return id
     
@@ -87,7 +97,45 @@ class APIResourceMetaclass(type):
             
             doc="\n".join(_textwrap.wrap(field_doc))
         )
+    
+    @classmethod
+    def _build_signature(cls, obj, with_fields=True):
         
+        parameters = []
+        
+        parameters.append(_forge.arg(obj._FIELD_ID, type=int))
+        
+        if with_fields:
+            
+            # Recompute FIELDS object
+            
+            fields = obj._FIELDS
+
+            if isinstance(fields, list):
+                fields = { key: str for key in fields }
+
+            if isinstance(fields, dict):
+                fields = {
+                    key: (val, "") if (isinstance(val, type) or
+                                    isinstance(val, _typing._GenericAlias))
+                    else val
+                    for (key, val) in fields.items()
+                }
+            
+            # Create forge parameters
+            
+            for (key, val) in fields.items():
+                if key  in obj._FIELDS_READ_ONLY:
+                    continue
+                
+                if not key in obj._FIELDS_REQUIRED:
+                    parameters.append(
+                        _forge.arg(key, type=val[0], default=None))
+                else:
+                    parameters.append(
+                        _forge.arg(key, type=val[0]))
+        
+        return _forge.FSignature(parameters=parameters)
     
     def __init__(cls, name, bases, attrs):
         # Initialize the data store of the class, if necessary
@@ -119,5 +167,10 @@ class APIResourceMetaclass(type):
                         field_name=field_name,
                         field_type=field_type,
                         field_doc=field_doc))
+        
+        #
+        # if getattr(cls, "update", None):
+        #     cls.update = _forge.sign(
+        #         *APIResourceMetaclass.__build_signature(obj=cls))(cls.update)
 
 # =============================================================================

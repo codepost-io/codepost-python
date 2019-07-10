@@ -49,5 +49,5 @@ def set_app_info(name, url=None, version=None):
     if version:
         app_info["version"] = version
 
-# Reimport all helpers
-from .helpers import *
+# Reimport all instantiated helper static classes
+from .instantiated import *

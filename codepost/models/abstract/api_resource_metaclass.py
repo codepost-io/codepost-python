@@ -17,12 +17,14 @@ import better_exceptions as _better_exceptions
 try:
     import forge as _forge
 except ImportError: # pragma: no cover
-    pass
+    _forge = None
 
 # Local imports
 import codepost.errors as _errors
 import codepost.util.logging as _logging
 import codepost.api_requestor as _api_requestor
+
+from . import api_crud as _crud
 
 # =============================================================================
 
@@ -99,11 +101,21 @@ class APIResourceMetaclass(type):
         )
     
     @classmethod
-    def _build_signature(cls, obj, with_fields=True):
+    def _build_signature(
+        cls,
+        obj,
+        with_fields=True,
+        with_id=True,
+        with_self=True,
+        all_optional=False):
         
         parameters = []
         
-        parameters.append(_forge.arg(obj._FIELD_ID, type=int))
+        if with_self:
+            parameters.append(_forge.arg("self"))
+
+        if with_id:
+            parameters.append(_forge.arg(obj._FIELD_ID, type=int))
         
         if with_fields:
             
@@ -128,7 +140,7 @@ class APIResourceMetaclass(type):
                 if key  in obj._FIELDS_READ_ONLY:
                     continue
                 
-                if not key in obj._FIELDS_REQUIRED:
+                if all_optional or not key in obj._FIELDS_REQUIRED:
                     parameters.append(
                         _forge.arg(key, type=val[0], default=None))
                 else:
@@ -168,9 +180,32 @@ class APIResourceMetaclass(type):
                         field_type=field_type,
                         field_doc=field_doc))
         
-        #
-        # if getattr(cls, "update", None):
-        #     cls.update = _forge.sign(
-        #         *APIResourceMetaclass.__build_signature(obj=cls))(cls.update)
+        if _forge:
+            # Only works in Python 3.5+ which has
+            # the python-forge package
+            
+            if _crud.CreatableAPIResource in bases:
+                cls.create = _forge.sign(
+                    *APIResourceMetaclass._build_signature(
+                        obj=cls,
+                        all_optional=False,
+                        with_id=False))(cls.create)
+                cls.saveInstanceAsNew = _forge.sign(
+                    *APIResourceMetaclass._build_signature(
+                        obj=cls,
+                        all_optional=True,
+                        with_id=False))(cls.saveInstanceAsNew)
+
+            if _crud.UpdatableAPIResource in bases:
+                cls.update = _forge.sign(
+                    *APIResourceMetaclass._build_signature(
+                        obj=cls,
+                        all_optional=True,
+                        with_id=True))(cls.update)
+                cls.saveInstance = _forge.sign(
+                    *APIResourceMetaclass._build_signature(
+                        obj=cls,
+                        all_optional=True,
+                        with_id=False))(cls.saveInstance)
 
 # =============================================================================

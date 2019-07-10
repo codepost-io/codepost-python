@@ -143,14 +143,25 @@ class APIResource(AbstractAPIResource):
             data.update(_copy.deepcopy(self._data))
 
         if kwargs:
-            data.update(_copy.deepcopy(kwargs))
+            # Make sure not to erase fields
+
+            # NOTE: In a more controled and documented manner, field erasure
+            # could be a feature.
+
+            kwargs_copy = {
+                key: _copy.deepcopy(value)
+                for (key, value) in kwargs.items()
+                if value != None
+            }
+
+            data.update(kwargs_copy)
         
         # Remove extraneous (unexpected) data + blank fields
         
         new_data = {
             key : data[key]
             for key in data.keys()
-            if (key in self._field_names) or (data[key] == None)
+            if (key in self._field_names) and (data[key] != None)
         }
         
         return new_data

@@ -1,4 +1,9 @@
 # codePost API Python Library
+
+This package provides a Python library to conveniently access the codePost API
+from any application or script written in the Python language.
+
+<!--
 [![Build Status](https://travis-ci.com/codepost-io/codePost-api-python.svg?branch=master)](https://travis-ci.com/codepost-io/codePost-api-python?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/codepost-io/codePost-api-python/badge.svg?branch=master)](https://coveralls.io/github/codepost-io/codePost-api-python?branch=master)
 
@@ -43,3 +48,5 @@ Run all tests for a specific Python version (modify `-e` according to your Pytho
 Run all tests in a single file for a specific Python version:
 
     pipenv run tox -e py27 -- tests/test_helpers.py
+
+-->

@@ -42,7 +42,7 @@ _ERROR_NONFIELD = "non_field_errors"
 # =============================================================================
 
 class TemplatedRuntimeError(RuntimeError):
-    DEFAULT_MESSAGE = "codePost Error."
+    DEFAULT_MESSAGE = "codePost Runtime Error."
 
     def __init__(self, message=None, **kwargs):
         if message == None:
@@ -55,7 +55,7 @@ class TemplatedRuntimeError(RuntimeError):
 
 class APIError(TemplatedRuntimeError):
     STATUS_CODE = None
-    DEFAULT_MESSAGE = "codePost API Error."
+    DEFAULT_MESSAGE = "codePost API Runtime Error."
 
     def __init__(self, message=None, response=None, **kwargs):
         super(APIError, self).__init__(
@@ -229,7 +229,6 @@ def handle_api_error(status_code, response, message=None, **kwargs):
         raise APIError(message=message, response=response, **kwargs)
 
 # =============================================================================
-
 
 class StaticObjectError(TemplatedRuntimeError):
     DEFAULT_MESSAGE = """

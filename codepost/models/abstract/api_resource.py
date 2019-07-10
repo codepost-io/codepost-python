@@ -55,7 +55,7 @@ class AbstractAPIResource(object):
     """
 
     _data = dict()
-    _requestor = _api_requestor.APIRequestor()
+    _requestor = _api_requestor.STATIC_REQUESTOR
     
     def _get_id(self, id=None):
         raise NotImplementedError("abstract class not meant to be used")
@@ -98,7 +98,7 @@ class APIResource(AbstractAPIResource):
         # Initialize requestor
         self._requestor = requestor
         if not isinstance(self._requestor, _api_requestor.APIRequestor):
-            self._requestor = _api_requestor.APIRequestor()
+            self._requestor = _api_requestor.STATIC_REQUESTOR
         
         # Initialize dictionary fields
         _fields = getattr(self, "_FIELDS", list())

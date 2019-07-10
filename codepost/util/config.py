@@ -110,7 +110,7 @@ Feel free to contact api@codepost.io for more assistance.
 """)
 
 _MSG_API_KEY_INVALID = _f("""
-API key "{{api_key:.5}}..."{{caption}} seems invalid.
+API key "{{api_key}}"{{caption}} seems invalid.
 {_MSG_API_KEY_HELP}
 """)
 

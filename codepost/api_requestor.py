@@ -85,16 +85,31 @@ class APIRequestor(object):
         self._base_url = base_url
         self._client = client
 
-        if not self._api_key:
-            # Try to retrieve a valid API key from the environment if the user
-            # failed to provide a valid API key to the constructor
-            self._api_key = _config.configure_api_key()
-        
-        _config.validate_api_key(self._api_key, log_outcome=True)
+        if self._api_key:
+            _config.validate_api_key(api_key=self._api_key, log_outcome=True)
         
         if not isinstance(self._client, _http_client.HTTPClient):
             # Reinitialize a default HTTPClient
             self._client = _http_client.HTTPClient(**kwargs)
+    
+    @property
+    def api_key(self):
+        # Specifically configured local API key
+        if self._api_key:
+            return self._api_key
+        
+        # Call to get the global cached API key
+        global_api_key = _config.configure_api_key()
+        return global_api_key
+    
+    @api_key.setter
+    def api_key(self, value):
+        self._api_key = value
+        _config.validate_api_key(api_key=self._api_key, log_outcome=True)
+    
+    @api_key.deleter
+    def api_key(self):
+        self._api_key = None
     
     @classmethod
     def _format_app_info(cls, **kwargs):
@@ -162,7 +177,7 @@ class APIRequestor(object):
         
         # Configure API key
 
-        api_key = kws.get("api_key", self._api_key)
+        api_key = kws.get("api_key", self.api_key)
         if "api_key" in kws:
             del kws["api_key"]
 
@@ -193,7 +208,9 @@ class APIRequestor(object):
 
         return ret
 
-        
+# =============================================================================
 
+STATIC_REQUESTOR = APIRequestor()
 
+# =============================================================================
 

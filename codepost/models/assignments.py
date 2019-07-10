@@ -8,9 +8,17 @@ from __future__ import print_function # Python 2
 
 # Python stdlib imports
 import typing as _typing
+try:
+    # Python 3
+    from urllib.parse import urljoin as _urljoin
+except ImportError: # pragma: no cover
+    # Python 2
+    from urlparse import urljoin as _urljoin
 
 # Local imports
 from . import abstract as _abstract
+
+from . import submissions as _submissions
 
 # =============================================================================
 
@@ -44,5 +52,20 @@ class Assignments(
     }
     _FIELDS_READ_ONLY = [ "rubricCategories", "mean", "median" ]
     _FIELDS_REQUIRED = [ "name", "points", "course" ]
+
+    def list_submissions(self, id=None):
+        _class_type = type(self)
+
+        id = self._get_id(id=id)
+
+        ret = self._requestor._request(
+            endpoint="{}/submissions".format(self.instance_endpoint_by_id(id=id)),
+            method="GET",
+        )
+        if ret.status_code == 200:
+            # Returns a list of all submissions
+            return list(map(
+                lambda kwargs: _submissions.Submissions(**kwargs),
+                ret.json))
 
 # =============================================================================

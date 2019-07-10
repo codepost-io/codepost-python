@@ -121,10 +121,10 @@ class APIResource(AbstractAPIResource):
                 self._data[key] = kwargs[key]
     
     def _get_id(self, id=None):
-        if self._static:
-            raise _errors.StaticObjectError()
-        
         if id == None:
+            if self._static:
+                raise _errors.StaticObjectError()
+            
             data = getattr(self, "_data", None)
             if isinstance(data, dict) and "id" in data and data["id"]:
                 id = data["id"]

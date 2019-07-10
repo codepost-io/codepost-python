@@ -37,4 +37,15 @@ class Courses(
     _FIELDS_READ_ONLY = [ ]
     _FIELDS_REQUIRED = [ "name", "period" ]
 
+    def list_courses(self):
+        _class_type = type(self)
+
+        ret = self._requestor._request(
+            endpoint=self.class_endpoint,
+            method="GET",
+        )
+        if ret.status_code == 200:
+            # Returns a list of courses
+            return list(map(lambda kwargs: _class_type(**kwargs), ret.json))
+
 # =============================================================================

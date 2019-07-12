@@ -68,6 +68,25 @@ def robust_str(obj, default="N/A"):
 
 # =============================================================================
 
+def is_field_set_in_kwargs(field, kwargs):
+    # Easy case: The field is not in the dict
+    if not field in kwargs:
+        return False
+    
+    # Easy case: Python 3.5> with forge
+    import codepost.models.abstract.api_resource_metaclass as _arm
+    
+    if _arm._forge:
+        return not (kwargs.get(field) is _arm._FORGE_VOID)
+    
+    # Hard case: Python 2.7
+    # (Since signature is not coerced by forge, there are no spurious
+    # fields in kwargs, and if we've made it this far, the field is in
+    # the dict)
+    return True
+
+# =============================================================================
+
 class DocEnum(_Enum):
     def __init__(self, value, doc):
         # type: (str, str) -> None

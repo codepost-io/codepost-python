@@ -18,6 +18,8 @@ try:
     import forge as _forge
 except ImportError: # pragma: no cover
     _forge = None
+finally:
+    _FORGE_VOID = _forge.void if _forge else "<void>"
 
 # Local imports
 import codepost.errors as _errors
@@ -75,15 +77,15 @@ class APIResourceMetaclass(type):
     
     def __mk_property(cls, field_name=None, field_type=None, field_doc=None):
         
-        if field_type == None:
+        if field_type is None:
             field_tuple = getattr(cls, "_FIELDS", dict()).get(field_name, None)
             if isinstance(field_tuple, tuple) and len(field_tuple) >= 1:
                 field_type = field_tuple[0]
         
-        if field_type == None:
+        if field_type is None:
             field_type = str
         
-        if field_doc == None:
+        if field_doc is None:
             field_tuple = getattr(cls, "_FIELDS", dict()).get(field_name, None)
             if isinstance(field_tuple, tuple) and len(field_tuple) >= 2:
                 field_type = field_tuple[1]
@@ -99,7 +101,7 @@ class APIResourceMetaclass(type):
             
             doc="\n".join(_textwrap.wrap(field_doc))
         )
-    
+
     @classmethod
     def _build_signature(
         cls,
@@ -142,7 +144,7 @@ class APIResourceMetaclass(type):
                 
                 if all_optional or not key in obj._FIELDS_REQUIRED:
                     parameters.append(
-                        _forge.arg(key, type=val[0], default=None))
+                        _forge.arg(key, type=val[0], default=_FORGE_VOID))
                 else:
                     parameters.append(
                         _forge.arg(key, type=val[0]))

@@ -130,6 +130,8 @@ class HTTPClient(object):
             
             self._proxy = _copy.deepcopy(proxy)
 
+        # NOTE: This make HTTPClient and any class containing it as an attribute
+        # impossible to pickle. Implemented custom pickling to avoid this.
         self._local_thread = _threading.local()
     
     def _get_session(self):
@@ -137,6 +139,10 @@ class HTTPClient(object):
         """
         Return or establish the session associated with the current thread.
         """
+        # Make sure the local thread storage has been instantiated
+        if getattr(self, "_local_thread", None) is None:
+            self._local_thread = _threading.local()
+
         # Store whatever session we use in the local thread storage
         if getattr(self._local_thread, "session", None) is None:
             self._local_thread.session = self._session or _requests.Session()
@@ -223,3 +229,16 @@ class HTTPClient(object):
         if session:
             session.close()
             s = _requests.Session()
+    
+    def  __getstate__(self):
+        state = dict(self.__dict__)
+        if "_local_thread" in state:
+            # This attribute cannot be pickled (but that's not a problem!)
+            del state["_local_thread"]
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__ = state
+        if self.__dict__.get("_local_thread", None) is None:
+            self.__dict__["_local_thread"] = _threading.local()
+        return self

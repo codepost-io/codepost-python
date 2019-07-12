@@ -38,6 +38,7 @@ import codepost
 import codepost.api_requestor as _api_requestor
 import codepost.errors as _errors
 import codepost.util.logging as _logging
+import codepost.util.misc as _misc
 
 # =============================================================================
 
@@ -132,6 +133,19 @@ class APIResource(AbstractAPIResource):
     
     def _validate_data(self, data, required=True):
         return True
+    
+    def  __getstate__(self):
+        state = dict(self.__dict__)
+        if "_requestor" in state:
+            # This class cannot be pickled for the moment
+            del state["_requestor"]
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__ = state
+        if self.__dict__.get("requestor", None) is None:
+            self.__dict__["requestor"] = _api_requestor.STATIC_REQUESTOR
+        return self
 
     def _get_data_and_extend(self, **kwargs):
         data = dict()
@@ -151,7 +165,7 @@ class APIResource(AbstractAPIResource):
             kwargs_copy = {
                 key: _copy.deepcopy(value)
                 for (key, value) in kwargs.items()
-                if value != None
+                if _misc.is_field_set_in_kwargs(key, kwargs)
             }
 
             data.update(kwargs_copy)
@@ -193,7 +207,7 @@ class APIResource(AbstractAPIResource):
             return self.instance_endpoint_by_id(id=self._data.get("id"))
            
     def _request(self, **kwargs):
-        self._requestor(**kwargs)
+        self._requestor._request(**kwargs)
     
     def __repr__(self):
         if getattr(self, "_data", None):

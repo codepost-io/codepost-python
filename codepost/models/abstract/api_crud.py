@@ -71,9 +71,6 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
 
         return self
 
-        
-
-
 # =============================================================================
 
 class ReadableAPIResource(_api_resource.AbstractAPIResource):

@@ -11,7 +11,7 @@ setup(
     description="Python bindings for the codePost API",
     long_description=README,
     long_description_content_type="text/markdown",
-    url="https://github.com/codepost-io/codePost-api-python",
+    url="https://github.com/codepost-io/codepost-python",
     author="codePost",
     author_email="team@codepost.io",
     license="MIT",

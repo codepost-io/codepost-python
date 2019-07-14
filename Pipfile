@@ -4,19 +4,27 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+coveralls = "*"
+eliot-tree = "*"
+ipykernel = "*"
+pylint = "*"
 pytest = ">=4.4"
 pytest-cov = ">=2.6"
-coveralls = "*"
-tox = "*"
-PyYAML = "*"
-pylint = "*"
 pytest-subtests = "*"
+PyYAML = "*"
+tox = "*"
 
 [packages]
-requests = "*"
+better-exceptions = "*"
+blessings = "*"
+colorama = "*"
+eliot = "*"
+python-forge = "*"
 PyYAML = "*"
-urllib3 = "*"
-codePost_api = {path = ".",editable = true}
+requests = "*"
+six = "*"
+typeguard = "*"
+codepost = {path = ".",editable = true}
 
 [requires]
 python_version = "3.7"

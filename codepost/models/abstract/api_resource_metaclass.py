@@ -129,9 +129,10 @@ class APIResourceMetaclass(type):
                 fields = { key: str for key in fields }
 
             if isinstance(fields, dict):
+                # FIXME: Not sure what the line about _typing.GenericAlias was about
                 fields = {
-                    key: (val, "") if (isinstance(val, type) or
-                                    isinstance(val, _typing._GenericAlias))
+                    key: (val, "") if (isinstance(val, type))# or
+                                    #isinstance(val, _typing._GenericAlias))
                     else val
                     for (key, val) in fields.items()
                 }

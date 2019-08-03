@@ -20,8 +20,8 @@ class Sections(
     _abstract.ReadableAPIResource,
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
-    metaclass=_abstract.APIResourceMetaclass
 ):
+    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "sections"
     _FIELD_ID = "id"
     _FIELDS = {

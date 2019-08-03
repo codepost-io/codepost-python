@@ -20,8 +20,8 @@ class Submissions(
     _abstract.ReadableAPIResource,
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
-    metaclass=_abstract.APIResourceMetaclass
 ):
+    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "submissions"
     _FIELD_ID = "id"
     _FIELDS = {

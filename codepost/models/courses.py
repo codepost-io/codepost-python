@@ -18,8 +18,8 @@ class Courses(
     _abstract.APIResource,
     _abstract.ReadableAPIResource,
     _abstract.UpdatableAPIResource,
-    metaclass=_abstract.APIResourceMetaclass
 ):
+    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "courses"
     _FIELD_ID = "id"
     _FIELDS = {

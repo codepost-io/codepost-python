@@ -23,7 +23,15 @@ setup(
     packages=find_packages(),
     install_requires=[
         "requests",
-        "PyYAML"
+        "PyYAML",
+        "better-exceptions",
+        "blessings",
+        "colorama",
+        "eliot",
+        "python-forge",
+        "six",
+        "typeguard",
+        "typing",
     ],
     include_package_data=True,
 )

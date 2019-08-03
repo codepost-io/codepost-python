@@ -18,8 +18,8 @@ class CourseRosters(
     _abstract.APIResource,
     _abstract.ReadableAPIResource,
     _abstract.UpdatableAPIResource,
-    metaclass=_abstract.APIResourceMetaclass
 ):
+    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "courses..roster"
     _FIELD_ID = "id"
     _FIELDS = {

@@ -6,7 +6,7 @@
 
 # Local import
 from . import config
-from . import logging
+from . import customLogging
 from . import misc
 
 # Reimports

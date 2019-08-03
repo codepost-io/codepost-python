@@ -33,7 +33,7 @@ import requests as _requests
 
 # Local imports
 from .util import config as _config
-from .util import logging as _logging
+from .util import customLogging as _logging
 
 from .util.misc import _make_f
 
@@ -63,9 +63,9 @@ class HTTPResponse(object):
                 self._data.update(data)
             except:
                 pass
-            
+
         self._response = response
-    
+
     @property
     def response(self):
         return self._response
@@ -81,7 +81,7 @@ class HTTPResponse(object):
     @property
     def content(self):
         return self._data.get("content", None)
-    
+
     @property
     def json(self):
         content_str = self._data.get("content", None)
@@ -91,7 +91,7 @@ class HTTPResponse(object):
                 return content_json
             except:
                 return None
-    
+
     @property
     def headers(self):
         return _copy.deepcopy(self._data.get("headers", None))
@@ -127,13 +127,13 @@ class HTTPClient(object):
                     `"https"`.
                     """
                 )
-            
+
             self._proxy = _copy.deepcopy(proxy)
 
         # NOTE: This make HTTPClient and any class containing it as an attribute
         # impossible to pickle. Implemented custom pickling to avoid this.
         self._local_thread = _threading.local()
-    
+
     def _get_session(self):
         # type: None -> _threading.local
         """
@@ -148,10 +148,10 @@ class HTTPClient(object):
             self._local_thread.session = self._session or _requests.Session()
 
         return self._local_thread.session
-    
+
     @_logging.log_call
     def request(self, url, method="GET", headers=None, **kwargs):
-        
+
         kws = {}
 
         # Calculate extra keyword arguments
@@ -164,7 +164,7 @@ class HTTPClient(object):
 
         session = self._get_session()
         resp_dict = {}
-        
+
         log_action = _logging.start_action(
             action_type="requests.session.request",
             session=session.__repr__(),
@@ -182,7 +182,7 @@ class HTTPClient(object):
                         method=method,
                         url=url,
                         headers=headers,
-                        **kws,
+                        **kws
                     )
                     log_action.add_success_fields(status_code=ret.status_code)
             except TypeError as e:
@@ -229,14 +229,14 @@ class HTTPClient(object):
         if session:
             session.close()
             s = _requests.Session()
-    
+
     def  __getstate__(self):
         state = dict(self.__dict__)
         if "_local_thread" in state:
             # This attribute cannot be pickled (but that's not a problem!)
             del state["_local_thread"]
         return state
-    
+
     def __setstate__(self, state):
         self.__dict__ = state
         if self.__dict__.get("_local_thread", None) is None:

@@ -68,7 +68,7 @@ class APIError(TemplatedRuntimeError):
     Unspecified run-time error with the codePost API, as reported by an HTTP
     status code.
     """
-    
+
     STATUS_CODE = None
 
     DEFAULT_MESSAGE = "codePost API Runtime Error."
@@ -81,11 +81,11 @@ class APIError(TemplatedRuntimeError):
         )
 
         self._response = response
-    
+
     @property
     def response(self):
         return self._response
-    
+
     @property
     def status_code(self):
         if self._response:
@@ -108,7 +108,7 @@ class UnknownAPIError(APIError):
         again, and if the problem persists, you may have found a bug,
         and we invite you to contact us at:
             {SUPPORT_EMAIL}
-        
+
         Thank you!
         """
 
@@ -156,12 +156,12 @@ class AuthenticationAPIError(APIError):
             you to manipulate all courses you are an administrator of,
             by going in your Settings page, as a logged in user:
                 {SETTINGS_URL}
-        
+
         3) You did provide an API key, but it has expired or been
             replaced by a more recent key. If that is the case, check
             your Settings page to make sure you have the most recent
             version.
-        
+
         {SUPPORT_MESSAGE}
         """
 
@@ -212,7 +212,7 @@ class BadRequestAPIError(APIError):
 
         {SUPPORT_MESSAGE}
         """
-    
+
     def __init__(self, message=None, response=None, **kwargs):
 
         # compute error message
@@ -250,7 +250,7 @@ def handle_api_error(status_code, response, message=None, **kwargs):
         handled_status_codes = getattr(exception, "STATUS_CODE", None)
         if handled_status_codes and status_code in handled_status_codes:
             raise exception(message=message, response=response, **kwargs)
-    
+
     # Default API error
     if status_code >= 400:
         raise APIError(message=message, response=response, **kwargs)

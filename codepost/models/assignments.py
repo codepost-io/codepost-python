@@ -30,8 +30,9 @@ class Assignments(
     _abstract.ReadableAPIResource,
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
-    metaclass=_abstract.APIResourceMetaclass
 ):
+    __metaclass__ = _abstract.APIResourceMetaclass
+
     _OBJECT_NAME = "assignments"
     _FIELD_ID = "id"
     _FIELDS = {

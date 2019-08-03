@@ -41,7 +41,7 @@ from . import http_client as _http_client
 from . import errors as _errors
 
 from .util import config as _config
-from .util import logging as _logging
+from .util import customLogging as _logging
 
 from .util.misc import _make_f
 
@@ -87,30 +87,30 @@ class APIRequestor(object):
 
         if self._api_key:
             _config.validate_api_key(api_key=self._api_key, log_outcome=True)
-        
+
         if not isinstance(self._client, _http_client.HTTPClient):
             # Reinitialize a default HTTPClient
             self._client = _http_client.HTTPClient(**kwargs)
-    
+
     @property
     def api_key(self):
         # Specifically configured local API key
         if self._api_key:
             return self._api_key
-        
+
         # Call to get the global cached API key
         global_api_key = _config.configure_api_key()
         return global_api_key
-    
+
     @api_key.setter
     def api_key(self, value):
         self._api_key = value
         _config.validate_api_key(api_key=self._api_key, log_outcome=True)
-    
+
     @api_key.deleter
     def api_key(self):
         self._api_key = None
-    
+
     @classmethod
     def _format_app_info(cls, **kwargs):
         s = ""
@@ -126,7 +126,7 @@ class APIRequestor(object):
 
     @classmethod
     def _build_headers(cls, api_key=None, method="get", **kwargs):
-        
+
         # The SDK's user agent info
         user_agent = _UA
 
@@ -155,12 +155,12 @@ class APIRequestor(object):
 
         if method.upper() == "POST" and not "Content-Type" in headers:
             headers["Content-Type"] = "application/json"
-        
+
         if method.upper() == "POST":
             headers.setdefault("Idempotency-Key", str(_uuid.uuid4()))
-        
+
         return headers
-    
+
     @classmethod
     def _handle_request_error(cls, response):
         _errors.handle_api_error(
@@ -172,9 +172,9 @@ class APIRequestor(object):
 
         if kwargs and isinstance(kwargs, dict) and len(kwargs) > 0:
             kws.update(_copy.deepcopy(kwargs))
-        
+
         kws["method"] = method
-        
+
         # Configure API key
 
         api_key = kws.get("api_key", self.api_key)
@@ -189,7 +189,7 @@ class APIRequestor(object):
         )
         kws["headers"] = kws.get("headers", dict())
         kws["headers"].update(default_headers)
-        
+
         # Provide POSTed data as a JSON string
 
         if "application/json" in kws["headers"].get("Content-Type", ""):
@@ -198,9 +198,8 @@ class APIRequestor(object):
 
         ret = self._client.request(
             url=urljoin(self._base_url, endpoint),
-            **kws,
+            **kws
         )
-
 
         # Handle error codes here
         if not ret.status_code == 200:

@@ -1,4 +1,4 @@
-# Makefile for the 'codePost-api' package.
+# Makefile for the 'codepost' package.
 #
 # Author: codePost Team <team@codepost.io>
 # Last Change: March 28, 2019
@@ -11,7 +11,7 @@
 # https://raw.githubusercontent.com/xolox/python-humanfriendly/0e0c80cc7b5d6c29deae3ad589928102e421cb2f/Makefile
 
 
-PACKAGE_NAME = codePost-api
+PACKAGE_NAME = codepost
 WORKON_HOME ?= $(HOME)/.virtualenvs
 VIRTUAL_ENV ?= $(WORKON_HOME)/$(PACKAGE_NAME)
 PATH := $(VIRTUAL_ENV)/bin:$(PATH)
@@ -19,7 +19,7 @@ MAKE := $(MAKE) --no-print-directory
 SHELL = bash
 
 ci:
-	pipenv run pytest --cov=codePost_api
+	pipenv run pytest --cov=codepost
 
 init:
 	pip install --upgrade pip~=18.0 pipenv==2018.10.13

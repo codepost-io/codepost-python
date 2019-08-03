@@ -25,6 +25,7 @@ requests = "*"
 six = "*"
 typeguard = "*"
 codepost = {path = ".", editable = true}
+typing = "*"
 
 [requires]
 python_version = "3.7"

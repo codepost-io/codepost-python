@@ -56,7 +56,7 @@ class Courses(
             endpoint=self.class_endpoint,
             method="GET",
         )
-        
+
         if ret.status_code == 200:
             # Returns a list of courses
             course_list = list(map(lambda kws: _class_type(**kws), ret.json))
@@ -68,9 +68,9 @@ class Courses(
             # Optionally filter according to the `period` parameter
             if period:
                 course_list = filter(lambda c: c.period == period, course_list)
-            
+
             return course_list
-        
+
         return []
 
 # =============================================================================

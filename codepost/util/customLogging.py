@@ -46,7 +46,7 @@ def fail_action(reason="", warning=True):
     exc_klass = RuntimeError
     if warning:
         exc_klass = RuntimeWarning
-        
+
     return current_action().finish(exception=exc_klass(reason))
 
 # =============================================================================
@@ -63,7 +63,7 @@ class _QuietableStreamHandler(_logging.StreamHandler):
         """
         return super(_QuietableStreamHandler, self).setLevel(
             lvl, *args, **kwargs)
-    
+
     def emit(self, record, *args, **kwargs):
         """
         Emit a record, but only if the global submodule attribute `_only_eliot`
@@ -121,7 +121,7 @@ class _SimpleColorFormatter(_logging.Formatter):
             record.lineno,
             record.message
         ))
-    
+
     def formatMessage(self, record):
         # type: (_logging.LogRecord) -> str
         return self.format_message(record=record)
@@ -139,7 +139,7 @@ def _setup_eliot():
     if not _eliot_configured:
         eliot.to_file(LOG_FILE)
         _eliot_configured = True
-    
+
     return _eliot_configured
 
 def _setup_logging(name=None, level="INFO"):
@@ -155,7 +155,7 @@ def _setup_logging(name=None, level="INFO"):
     if not name in _loggers_configured:
 
         # Add the color handler to the terminal output
-        
+
         handler = _logging.StreamHandler()#_QuietableStreamHandler()
         formatter = _SimpleColorFormatter()
         handler.setFormatter(formatter)
@@ -163,7 +163,7 @@ def _setup_logging(name=None, level="INFO"):
         # Set logging level of the terminal output (default to provided level)
 
         handler.setLevel(_os.environ.get("LOGLEVEL", level))
-        
+
         # Set logging level of the logger
 
         logger.setLevel("DEBUG")
@@ -179,13 +179,13 @@ def _setup_logging(name=None, level="INFO"):
         eliotHandler = eliot.stdlib.EliotHandler()
         eliotHandler.setLevel("DEBUG")
         logger.addHandler(eliotHandler)
-        
+
         # Remember we configured this logger
-        
+
         _loggers_configured[name] = handler
 
         # We may also need to configure eliot (at most once)
-        
+
         _setup_eliot()
 
     return logger
@@ -226,7 +226,7 @@ def make_verbose():
 
         # Add a standard output stream to eliot
         eliot.to_file(_sys.stdout)
-    
+
     return _only_eliot
 
 # =============================================================================

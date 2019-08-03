@@ -58,8 +58,9 @@ except ImportError: # pragma: no cover
             "'enum34' or 'aenum'. Please install:\n\npip install --user aenum")
 
 # Local imports
-from .. import util as _util
-from . import logging as _logging
+from . import helpers as _util
+
+from . import customLogging as _logging
 
 from .misc import _make_f
 
@@ -139,7 +140,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
         if not _util.is_stringable(api_key):
             if not api_key in _checked_api_keys:
                 _checked_api_keys[api_key] = False
-        
+
         # Log failure
         if log_outcome:
             _logger.warning(
@@ -147,13 +148,13 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
                     api_key=_util.robust_str(obj=api_key),
                     caption=caption,
                 ))
-        
+
         _logging.fail_action(
             "Failed validation of API KEY '{}'{}.".format(
                 _util.robust_str(obj=api_key), caption))
-        
+
         return False
-    
+
     ######################################################################
     # CACHE:
     # Save previously computed results to avoid going through the same
@@ -170,7 +171,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
                     _util.robust_str(obj=api_key),
                     caption
                 ))
-            
+
             del _checked_api_keys[api_key]
 
         else:
@@ -185,7 +186,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 
             if _checked_api_keys[api_key]:
                 return True
-            
+
             else:
                 return invalid_api_key()
 
@@ -195,15 +196,15 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
     ######################################################################
 
     # Some guesses can easily be rejected
-    
+
     if api_key == None or api_key == "":
         return invalid_api_key()
-    
+
     # If it's not a string...
-    
+
     if not _util.is_stringable(api_key):
         return invalid_api_key()
-    
+
     # If it's too short...
 
     if len(api_key) < 5:
@@ -214,7 +215,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 
     if len(api_key) != 40:
         return invalid_api_key()
-    
+
     ######################################################################
     # HTTP REQUEST
     ######################################################################
@@ -232,11 +233,11 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 
         if r.status_code == 401:
             return invalid_api_key()
-        
+
         # Add to cache as success
-        
+
         _checked_api_keys[api_key] = True
-        
+
         return True
 
     except:
@@ -244,7 +245,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
             "Unexpected error while validating an API_KEY '{:.5}...'.".format(
                 _util.robust_str(obj=api_key)
             ))
-    
+
     return invalid_api_key()
 
 # =============================================================================
@@ -262,13 +263,13 @@ def configure_api_key(api_key=None, override=True):
 
     When provided with an override `api_key` parameter, this method will
     store the key in memory for future calls.
-    
+
     It is also possible to call the method with `override` set to
     `False`, to only use the override API key in case one cannot be
     found in the environment.
     """
     global _api_key, _api_key_override
-    
+
     # Used for reporting
     api_key_str = "N/A"
     if _util.is_stringable(api_key):
@@ -283,7 +284,7 @@ def configure_api_key(api_key=None, override=True):
                 api_key_str
             ))
 
-        # Check validity of provided override key  
+        # Check validity of provided override key
         validate_api_key(
             api_key=api_key,
             log_outcome=True,
@@ -298,8 +299,8 @@ def configure_api_key(api_key=None, override=True):
             "API_KEY '{:.5}...' was provided previously as an override.".format(
                 _api_key_override
             ))
-        
-        # Check validity of stored override key  
+
+        # Check validity of stored override key
         validate_api_key(
             api_key=_api_key_override,
             log_outcome=True,
@@ -316,15 +317,15 @@ def configure_api_key(api_key=None, override=True):
             API_KEY detected in source code or module memory.
             Not overriding it.
             """)
-        
-        # Check validity of hard-coded key  
+
+        # Check validity of hard-coded key
         validate_api_key(
             api_key=_api_key,
             log_outcome=True,
             caption=" previously detected or hard-coded in the library")
 
         return _api_key
-    
+
     # Environment variable API_KEY
 
     if _os.environ.get(DEFAULT_API_KEY_ENV, None) != None:
@@ -337,13 +338,13 @@ def configure_api_key(api_key=None, override=True):
                 DEFAULT_API_KEY_ENV,
                 _api_key
             ))
-        
-        # Check validity of environment provided key  
+
+        # Check validity of environment provided key
         validate_api_key(
             api_key=_api_key,
             log_outcome=True,
             caption=" obtained from an environment variable")
-        
+
         return _api_key
 
     # YAML configuration API_KEY
@@ -359,7 +360,7 @@ def configure_api_key(api_key=None, override=True):
             _logger.debug(
                 "No config file here: {}".format(
                     config_path))
-    
+
     if location != None:
         _logger.debug("Configuration file detected: {}".format(location))
 
@@ -374,7 +375,7 @@ def configure_api_key(api_key=None, override=True):
                 "Configuration file detected: "
                 "Loading failed, no valid API_KEY.")
             return None
-        
+
         if config.get("api_key", "") == "":
             _logger.debug(
                 "Configuration file detected: "
@@ -385,30 +386,30 @@ def configure_api_key(api_key=None, override=True):
                     "The configuration file may be using the "
                     "key name 'api-key' instead of 'api_key'."
                 )
-            
+
             return None
-        
+
         _api_key = config.get("api_key")
-        
+
         _logger.debug(
             ("API_KEY detected in configuration file ({}): " +
             "'{:.5}...'").format(
                 DEFAULT_API_KEY_ENV,
                 _util.robust_str(_api_key)
             ))
-        
-        # Check validity of environment provided key  
+
+        # Check validity of environment provided key
         validate_api_key(
             api_key=_api_key,
             log_outcome=True,
             caption=" obtained config file '{}'".format(location))
-        
+
         return _api_key
-    
+
     _logger.warning(_MSG_API_KEY_NOT_FOUND)
-    
+
     _logging.current_action().finish(exception=RuntimeWarning("No API key"))
-        
+
     return None
 
 # =============================================================================
@@ -423,31 +424,31 @@ class api_key_decorator(object):
         self._override_api_key = override_api_key
 
     def __call__(self, target_function):
-        
+
         @_functools.wraps(target_function)
         def _wrapper(*args, **kwargs):
             global _checked_api_keys
-            
+
             api_key = None
 
             # See what the user has provided, if anything
             candidate_api_key = kwargs.get("api_key", None)
-            
+
             # Check if this candidate should override any more
             # sophisticated guess that we could make (because the
             # `api_key_override` is unique to the decorator, it is deleted
             # from the `kwargs` before being passed to the `targetfunc`.)
-            
+
             override_api_key = self._override_api_key
             if "override_api_key" in kwargs:
                 override_api_key = kwargs["api_key_override"]
                 del kwargs["api_key_override"]
-            
+
             if override_api_key and candidate_api_key:
                 api_key = candidate_api_key
-            
+
             else:
-                
+
                 # Check whether the user-provided API Key
                 if candidate_api_key:
 
@@ -457,7 +458,7 @@ class api_key_decorator(object):
 
                     if _checked_api_keys[candidate_api_key]:
                         api_key = candidate_api_key
-                
+
                 # Check automatic configuration (only if candidate did not
                 # seem to pan out)
                 if not api_key:
@@ -465,17 +466,17 @@ class api_key_decorator(object):
                     if api_key:
                         _checked_api_keys[api_key] = \
                             validate_api_key(api_key=api_key)
-                
+
                 # Override the parameter `api_key` before calling method
                 kwargs["api_key"] = api_key
-            
+
             # Call target function
             filtered_kwargs = _util.filter_kwargs_for_function(
                 func=target_function,
                 kwargs=kwargs)
-            
+
             return target_function(*args, **filtered_kwargs)
-        
+
         return _wrapper
 
 # =============================================================================

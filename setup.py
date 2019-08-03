@@ -24,11 +24,11 @@ setup(
     install_requires=[
         "requests",
         "PyYAML",
-        "better-exceptions",
+        "better_exceptions",
         "blessings",
         "colorama",
         "eliot",
-        "python-forge",
+        "python_forge",
         "six",
         "typeguard",
         "typing",

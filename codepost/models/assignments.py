@@ -61,36 +61,36 @@ class Assignments(
     _FIELDS_REQUIRED = [ "name", "points", "course" ]
 
     def retrieve_by_name(self, course_name=None, course_period=None, name=None):
-      """
-       Returns the assignment whose:
+        """
+        Returns the assignment whose:
          - name is equal to `name`
          - course has a name equal to `course_name` and a period equal to `course_period`
-      """
+        """
 
-      _class_type = type(self)
+        _class_type = type(self)
 
-      matched_courses = _courses.list_available(name=course_name, period=course_period)
+        matched_courses = _courses.list_available(name=course_name, period=course_period)
 
-      # no two courses should share the same name and period
-      assert(len(matched_courses) <= 1)
+        # no two courses should share the same name and period
+        assert(len(matched_courses) <= 1)
 
-      if len(matched_courses) == 1:
-        # Case 1: we found the corresponding course
-        matched_course = matched_courses[0]
+        if len(matched_courses) == 1:
+            # Case 1: we found the corresponding course
+            matched_course = matched_courses[0]
 
-        # Try to find assignment whose name matches 'name'
-        assignments = map(lambda aid: self.retrieve(id=aid), matched_course.assignments)
-        matched_assignment = filter(lambda a: a.name == name, assignments)
+            # Try to find assignment whose name matches 'name'
+            assignments = map(lambda aid: self.retrieve(id=aid), matched_course.assignments)
+            matched_assignment = filter(lambda a: a.name == name, assignments)
 
-        if matched_assignment is None:
-          _errors.handle_api_error(status_code=404, response="No assignments exists with the specified name in the specified course.")
+            if matched_assignment is None:
+                _errors.handle_api_error(status_code=404, response="No assignments exists with the specified name in the specified course.")
+            else:
+                return matched_assignment
+
         else:
-          return matched_assignment
-
-      else:
-        # Case 2: we couldn't find any course with specified (name, period)
-        # Raise a not found error here
-        _errors.handle_api_error(status_code=404, response="No course exists with the specified (name, period).")
+            # Case 2: we couldn't find any course with specified (name, period)
+            # Raise a not found error here
+            _errors.handle_api_error(status_code=404, response="No course exists with the specified (name, period).")
 
     def list_submissions(self, id=None, student=None, grader=None):
         """

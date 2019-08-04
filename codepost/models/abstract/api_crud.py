@@ -10,6 +10,7 @@ from __future__ import print_function # Python 2
 import copy as _copy
 import functools as _functools
 import textwrap as _textwrap
+import importlib as _importlib
 
 # External dependencies
 import better_exceptions as _better_exceptions
@@ -109,6 +110,37 @@ class ReadableAPIResource(_api_resource.AbstractAPIResource):
         self._data = obj._data
 
         return self
+
+    def _retrieve_related_objects(self, related_field):
+        """
+        Retrieve a related object (or objects) given the fieldname corresponding
+        to its id (or list of ids)
+        """
+
+        related_objects = getattr(self, "_FIELDS_RELATED_OBJECTS", {}   )
+
+        if related_field in related_objects.keys():
+            data = self._data.get(related_field)
+
+            # Make sure the retrieved field is a valid object type (int or int list)
+            is_single_object = isinstance(data, int)
+            is_object_list = isinstance(data, list) and all(isinstance(n, int) for n in data)
+
+            # If this fails, FIELD_RELATED_OBJECTS contains a key it shouldn't
+            assert(is_single_object or is_object_list)
+
+            # detect type of child
+            object_module = _importlib.import_module('.instantiated', package="codepost")
+            class_module = getattr(object_module, related_objects[related_field])
+
+            # retrieve child or children
+            if is_single_object:
+                return class_module.retrieve(id=data)
+            else:
+                return list(map(lambda x: class_module.retrieve(id=x), data))
+        else:
+            assert(False) # FIXME: raise proper exception here
+
 
 # =============================================================================
 

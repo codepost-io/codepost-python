@@ -17,10 +17,11 @@ __version__ = "0.1.0"
 # Import sub-modules
 
 from . import util
+from .util.config import configure_api_key
 
 # Configure credentials
 
-util.config.configure_api_key()
+util.config.configure_api_key(log_outcome=False)
 
 # Configuration module variables
 

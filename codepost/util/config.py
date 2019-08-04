@@ -251,7 +251,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 # =============================================================================
 
 @_logging.log_call
-def configure_api_key(api_key=None, override=True):
+def configure_api_key(api_key=None, override=True, log_outcome=True):
     # type: (str, bool) -> str
     """
     Configures the API key to authenticate with the codePost API, by
@@ -406,8 +406,9 @@ def configure_api_key(api_key=None, override=True):
 
         return _api_key
 
-    _logger.warning(_MSG_API_KEY_NOT_FOUND)
-
+    if log_outcome:
+        _logger.warning(_MSG_API_KEY_NOT_FOUND)
+    
     _logging.current_action().finish(exception=RuntimeWarning("No API key"))
 
     return None

@@ -33,7 +33,7 @@ import requests as _requests
 
 # Local imports
 from .util import config as _config
-from .util import customLogging as _logging
+from .util import custom_logging as _logging
 
 from .util.misc import _make_f
 

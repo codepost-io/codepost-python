@@ -23,7 +23,7 @@ finally:
 
 # Local imports
 import codepost.errors as _errors
-import codepost.util.customLogging as _logging
+import codepost.util.custom_logging as _logging
 import codepost.api_requestor as _api_requestor
 
 from . import api_crud as _crud

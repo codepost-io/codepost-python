@@ -41,7 +41,7 @@ from . import http_client as _http_client
 from . import errors as _errors
 
 from .util import config as _config
-from .util import customLogging as _logging
+from .util import custom_logging as _logging
 
 from .util.misc import _make_f
 

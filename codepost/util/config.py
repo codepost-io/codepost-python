@@ -60,7 +60,7 @@ except ImportError: # pragma: no cover
 # Local imports
 from . import helpers as _util
 
-from . import customLogging as _logging
+from . import custom_logging as _logging
 
 from .misc import _make_f
 

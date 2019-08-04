@@ -15,7 +15,7 @@ import textwrap as _textwrap
 import better_exceptions as _better_exceptions
 
 # Local imports
-import codepost.util.customLogging as _logging
+import codepost.util.custom_logging as _logging
 import codepost.api_requestor as _api_requestor
 
 from . import api_resource as _api_resource

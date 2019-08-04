@@ -37,7 +37,7 @@ import requests as _requests
 import codepost
 import codepost.api_requestor as _api_requestor
 import codepost.errors as _errors
-import codepost.util.customLogging as _logging
+import codepost.util.custom_logging as _logging
 import codepost.util.misc as _misc
 
 # =============================================================================

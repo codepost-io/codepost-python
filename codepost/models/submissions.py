@@ -42,5 +42,12 @@ class Submissions(
     }
     _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files" ]
     _FIELDS_REQUIRED = [ "assignment", "students" ]
+    _FIELDS_RELATED_OBJECTS ={ "files" : "file" }
+
+    def get_files(self):
+        return self._retrieve_related_objects('files')
+
+    def get_file_by_name(self, file_name):
+        return filter(lambda s: s.name == file_name, self.get_files())
 
 # =============================================================================

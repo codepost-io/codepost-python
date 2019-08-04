@@ -59,6 +59,7 @@ class Assignments(
     }
     _FIELDS_READ_ONLY = [ "rubricCategories", "mean", "median" ]
     _FIELDS_REQUIRED = [ "name", "points", "course" ]
+    _FIELDS_RELATED_OBJECTS ={ "course" : "course", "rubricCategories" : "rubric_category" }
 
     def retrieve_by_name(self, course_name=None, course_period=None, name=None):
         """
@@ -77,9 +78,9 @@ class Assignments(
         if len(matched_courses) == 1:
             # Case 1: we found the corresponding course
             matched_course = matched_courses[0]
+            assignments = matched_course._retrieve_related_objects('assignments')
 
             # Try to find assignment whose name matches 'name'
-            assignments = map(lambda aid: self.retrieve(id=aid), matched_course.assignments)
             matched_assignment = filter(lambda a: a.name == name, assignments)
 
             if matched_assignment is None:

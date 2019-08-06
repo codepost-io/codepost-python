@@ -125,8 +125,9 @@ class APIResource(AbstractAPIResource):
         Obtain the internal identifier of an API resource based on the provided
         arguments, using the following resolution order:
 
-        1. If the `obj` parameter is provided with a valid API resource object,
-           extract identifier of that object.
+        1. If the `obj` parameter is provided with a valid API resource object
+           or some integer ID representative of an object, extract identifier
+           of that object.
         
         2. If the `id` parameter is provided with a valid positive integer,
            return `id`.
@@ -143,6 +144,10 @@ class APIResource(AbstractAPIResource):
                 # Delegate to its own `_get_id` method
                 return obj._get_id(id=id)
             
+            # Seems we are asked to use an ID as an object
+            elif isinstance(obj, int):
+                return self._get_id(id=obj)
+
             else:
                 raise _errors.InvalidAPIResourceError()
         
@@ -162,8 +167,8 @@ class APIResource(AbstractAPIResource):
         if data is None or not isinstance(data, dict):
             raise _errors.InvalidAPIResourceError()
         
-        if "id" in data:
-            return self._get_id(id=data["id"])
+        if self._FIELD_ID in data:
+            return self._get_id(id=data[self._FIELD_ID])
 
         # If we made it here, then something went wrong
         raise _errors.UnknownAPIResourceError()

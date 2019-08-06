@@ -58,7 +58,7 @@ class AbstractAPIResource(object):
     _data = dict()
     _requestor = _api_requestor.STATIC_REQUESTOR
 
-    def _get_id(self, id=None):
+    def _get_id(self, id=None, obj=None):
         raise NotImplementedError("abstract class not meant to be used")
 
     def _get_data_and_extend(self, **kwargs):
@@ -120,16 +120,53 @@ class APIResource(AbstractAPIResource):
             if key in self._field_names:
                 self._data[key] = kwargs[key]
 
-    def _get_id(self, id=None):
-        if id == None:
-            if self._static:
-                raise _errors.StaticObjectError()
+    def _get_id(self, id=None, obj=None):
+        """
+        Obtain the internal identifier of an API resource based on the provided
+        arguments, using the following resolution order:
 
-            data = getattr(self, "_data", None)
-            if isinstance(data, dict) and "id" in data and data["id"]:
-                id = data["id"]
+        1. If the `obj` parameter is provided with a valid API resource object,
+           extract identifier of that object.
+        
+        2. If the `id` parameter is provided with a valid positive integer,
+           return `id`.
+        
+        3. Otherwise, if the current object is an instantiated API resource,
+           return the internal identifier of that object.
+        """
 
-        return id
+        # CASE 1: Obtain ID from an API resource object.
+        if obj is not None:
+
+            # Seems we are asked to extract ID from an object
+            if isinstance(obj, AbstractAPIResource):
+                # Delegate to its own `_get_id` method
+                return obj._get_id(id=id)
+            
+            else:
+                raise _errors.InvalidAPIResourceError()
+        
+        # CASE 2: Obtain ID from provided integer.
+        if id is not None:
+
+            if isinstance(id, int) and id > 0:
+                return id
+
+            raise _errors.UnknownAPIResourceError()
+        
+        # CASE 3: Obtain ID from instance's data
+        if self._static:
+            raise _errors.StaticObjectError()
+        
+        data = getattr(self, "_data", None)
+        if data is None or not isinstance(data, dict):
+            raise _errors.InvalidAPIResourceError()
+        
+        if "id" in data:
+            return self._get_id(id=data["id"])
+
+        # If we made it here, then something went wrong
+        raise _errors.UnknownAPIResourceError()
 
     def _validate_data(self, data, required=True):
         return True

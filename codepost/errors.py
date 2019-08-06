@@ -291,6 +291,24 @@ class InvalidAPIResourceError(TemplatedRuntimeError):
         {SUPPORT_MESSAGE}
         """
 
+class UnknownAPIResourceError(TemplatedRuntimeError):
+    """
+    Run-time error due to an inability to extract the internal identifier of
+    an API resource that is being used by the API for an unknown reason.
+    """
+
+    DEFAULT_MESSAGE = """
+        INVALID API RESOURCE IDENTIFIER.
+        One of the API methods you are calling is trying to obtain the internal
+        identifier for an API resource that is required to fulfill your query.
+        Unfortunately, this was not successful because an identifier that was
+        provided is either `None`, not an integer, or a negative integer. This
+        could be either an identifier directly provided by you, or that is the
+        result of internal computations.
+
+        {SUPPORT_MESSAGE}
+        """
+
 # =============================================================================
 
 class UploadError(TemplatedRuntimeError):

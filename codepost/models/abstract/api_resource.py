@@ -135,6 +135,10 @@ class APIResource(AbstractAPIResource):
         return True
 
     def  __getstate__(self):
+        """
+        Returns the full state of the API resource, except for the `requestor`
+        object which cannot be pickled.
+        """
         state = dict(self.__dict__)
         if "_requestor" in state:
             # This class cannot be pickled for the moment
@@ -142,12 +146,23 @@ class APIResource(AbstractAPIResource):
         return state
 
     def __setstate__(self, state):
+        """
+        Reloads the full state of the API resource, except for the `requestor`
+        object, which is replaced by the standard static requestor
+        (`STATIC_REQUESTOR`).
+        """
         self.__dict__ = state
         if self.__dict__.get("requestor", None) is None:
             self.__dict__["requestor"] = _api_requestor.STATIC_REQUESTOR
         return self
 
     def _get_data_and_extend(self, **kwargs):
+        """
+        Internal helper method to combine the keyword arguments (with some
+        arguments possibly equal to a VOID placeholder value which must be
+        ignored) with, possibly, the internal representation of the
+        instantiated API resource.
+        """
         data = dict()
 
         # If this is a static object, we should ignore self._data
@@ -182,6 +197,10 @@ class APIResource(AbstractAPIResource):
 
     @property
     def class_endpoint(self):
+        """
+        The base endpoint designating the current kind of API resource, thus
+        if the API resource is an assignment, then `/assignments/`
+        """
         classname = getattr(self, "_OBJECT_NAME", "")
         if classname:
             classname = classname.replace("..", "/{}/")
@@ -190,6 +209,12 @@ class APIResource(AbstractAPIResource):
             return endpoint
 
     def instance_endpoint_by_id(self, id=None):
+        """
+        Returns the endpoint designating some instantiated API resource of the
+        same kind. If no `id` is provided, will use the `id` of the currently
+        instantiated resource. If this is called from a static object, then
+        returns `None`.
+        """
         if id == None and getattr(self, "_data", None):
             id = self._data.get("id", None)
         if id:
@@ -203,13 +228,25 @@ class APIResource(AbstractAPIResource):
 
     @property
     def instance_endpoint(self):
+        """
+        The endpoint designating the currently instantiated API resource, thus
+        if the API resource is an assignment with ID 1, then `/assignments/1/`.
+        """
         if getattr(self, "_data", None):
             return self.instance_endpoint_by_id(id=self._data.get("id"))
 
     def _request(self, **kwargs):
+        """
+        Make an HTTP request through the API resource's underlying requestor
+        object.
+        """
         self._requestor._request(**kwargs)
 
     def __repr__(self):
+        """
+        Provide a representation of the API resource, as a dump of its internal
+        dictionary.
+        """
         if getattr(self, "_data", None):
             return self._data.__repr__()
         return dict().__repr__()

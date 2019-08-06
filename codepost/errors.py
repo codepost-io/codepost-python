@@ -274,6 +274,23 @@ class StaticObjectError(TemplatedRuntimeError):
         {SUPPORT_MESSAGE}
         """
 
+class InvalidAPIResourceError(TemplatedRuntimeError):
+    """
+    Run-time error due to an inability to extract the internal identifier of
+    an API resource that is being used by the API.
+    """
+
+    DEFAULT_MESSAGE = """
+        INVALID API RESOURCE.
+        One of the API methods you are calling, expects an API resource as one
+        of its parameters (for instance, if you are calling `file.create`,
+        this method will expect to be provided the submission to which a file
+        must be added). You provided something that is either `None` or not
+        an API resource.
+
+        {SUPPORT_MESSAGE}
+        """
+
 # =============================================================================
 
 class UploadError(TemplatedRuntimeError):

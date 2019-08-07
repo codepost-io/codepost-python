@@ -257,16 +257,21 @@ class APIResource(AbstractAPIResource):
         instantiated resource. If this is called from a static object, then
         returns `None`.
         """
-        if id == None and getattr(self, "_data", None):
-            id = self._data.get("id", None)
-        if id:
+        _id = self._get_id(id=id)
+
+        if _id:
+            # CASE 1: The class end point might have a formatting parameter
+            # NOTE: This is for the weird case of submissions of an assignment
             try:
-                tmp = self.class_endpoint.format(id)
+                tmp = self.class_endpoint.format(_id)
                 if tmp != self.class_endpoint:
                     return tmp
             except IndexError: # means formatting didn't work
                 pass
-            return urljoin(self.class_endpoint, str(id))
+            
+            # CASE 2: The class end point has not formatting parameter
+            # NOTE: Trailing slash important (API bug)
+            return urljoin(self.class_endpoint, "{}/".format(_id))
 
     @property
     def instance_endpoint(self):

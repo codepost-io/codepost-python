@@ -117,17 +117,18 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
     Abstract class for API resources which can be updated (crUd).
     """
 
-    def update(self, id, **kwargs):
+    def update(self, id=None, **kwargs):
         """
         Update an API resource provided its `id` and fields to modify.
         """
+        _id = self._get_id(id=id)
         _class_type = type(self)
 
         # FIXME: do kwargs validation
         data = self._get_data_and_extend(**kwargs)
-
+        
         ret = self._requestor._request(
-            endpoint=self.instance_endpoint_by_id(id=id),
+            endpoint=self.instance_endpoint_by_id(id=_id),
             method="PATCH",
             data=data,
         )

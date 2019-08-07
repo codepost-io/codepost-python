@@ -9,11 +9,15 @@ from __future__ import print_function # Python 2
 # Python stdlib imports
 import typing as _typing
 
+# External dependencies
+import six as _six
+
 # Local imports
 from . import abstract as _abstract
 
 # =============================================================================
 
+@_six.add_metaclass(_abstract.APIResourceMetaclass)
 class Sections(
     _abstract.APIResource,
     _abstract.CreatableAPIResource,
@@ -21,7 +25,6 @@ class Sections(
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
 ):
-    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "sections"
     _FIELD_ID = "id"
     _FIELDS = {

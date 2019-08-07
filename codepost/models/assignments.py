@@ -17,6 +17,9 @@ except ImportError: # pragma: no cover
     from urlparse import urljoin as _urljoin
     from urllib import urlencode as _urlencode
 
+# External dependencies
+import six as _six
+
 # Local imports
 from . import abstract as _abstract
 
@@ -24,6 +27,7 @@ from . import submissions as _submissions
 
 # =============================================================================
 
+@_six.add_metaclass(_abstract.APIResourceMetaclass)
 class Assignments(
     _abstract.APIResource,
     _abstract.CreatableAPIResource,
@@ -31,8 +35,6 @@ class Assignments(
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
 ):
-    __metaclass__ = _abstract.APIResourceMetaclass
-
     _OBJECT_NAME = "assignments"
     _FIELD_ID = "id"
     _FIELDS = {

@@ -311,6 +311,26 @@ class UnknownAPIResourceError(TemplatedRuntimeError):
 
 # =============================================================================
 
+class CannotChooseIDError(TemplatedRuntimeError):
+    """
+    Run-time error thrown when a CREATE call is made with a user-provided `id`
+    parameter: The API chooses the identifier for new resources, these cannot
+    be user-selected.
+    """
+
+    DEFAULT_MESSAGE = """
+        CANNOT CHOOSE ID OF CREATED RESOURCE.
+        You are trying to create a codePost API resource, but you are
+        attempting to provide an identifier. The codePost API automatically
+        assigns a new identifier to resource it creates, and these cannot be
+        user-selected. If you did not make a call to a `create` method with
+        an `id` parameter, there may be some other underlying issue.
+
+        {SUPPORT_MESSAGE}
+        """
+
+# =============================================================================
+
 class UploadError(TemplatedRuntimeError):
     """
     Run-time error related to the upload of a submission.

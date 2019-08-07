@@ -15,6 +15,7 @@ import textwrap as _textwrap
 import better_exceptions as _better_exceptions
 
 # Local imports
+import codepost.errors as _errors
 import codepost.util.custom_logging as _logging
 import codepost.api_requestor as _api_requestor
 
@@ -41,6 +42,10 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         it as an object.
         """
         _class_type = type(self)
+
+        # Cannot take an ID
+        if self._FIELD_ID in kwargs:
+            raise _errors.CannotChooseIDError()
 
         # FIXME: do kwargs validation
         data = self._get_data_and_extend(**kwargs)
@@ -159,12 +164,14 @@ class DeletableAPIResource(_api_resource.AbstractAPIResource):
     Abstract class for API resources which can be deleted (cruD).
     """
 
-    def delete(self, id):
+    def delete(self, id=None):
         """
-        Delete an API resource provided its `id`.
+        Delete an API resource provided its `id` when called statically and
+        deletes the instantiated API resource it has been called on otherwise.
         """
+        _id = self._get_id(id=id)
         ret = self._requestor._request(
-            endpoint=self.instance_endpoint_by_id(id=id),
+            endpoint=self.instance_endpoint_by_id(id=_id),
             method="DELETE",
         )
         return (ret.status_code == 204)

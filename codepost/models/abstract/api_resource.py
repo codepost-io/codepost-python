@@ -55,8 +55,13 @@ class AbstractAPIResource(object):
     Abstract class type for a codePost API resource.
     """
 
-    _data = dict()
+    # Class constants
+    _FIELD_ID = "id"
+    
+    # Class attributes
+    _data = None
     _requestor = _api_requestor.STATIC_REQUESTOR
+    _static = False
 
     def _get_id(self, id=None, obj=None):
         raise NotImplementedError("abstract class not meant to be used")
@@ -85,13 +90,8 @@ class APIResource(AbstractAPIResource):
     Base class type to store and manipulate a codePost API resource.
     """
 
-    # Class constants
-    _FIELD_ID = "id"
-
     # Class attributes
-    _data = None
     _field_names = None
-    _static = False
 
     def __init__(self, requestor=None, static=False, **kwargs):
 

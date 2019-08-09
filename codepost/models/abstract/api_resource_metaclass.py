@@ -46,14 +46,14 @@ class APIResourceMetaclass(type):
     def __getid(cls):
         id_field_name = getattr(cls, "_FIELD_ID", "id")
         data = getattr(cls, "_data", dict())
-        id = data.get(id_field_name, None)
+        _id = data.get(id_field_name, None)
 
         # If no identifier, raise exception
-        if id == None:
+        if _id == None:
             raise _errors.StaticObjectError()
             #raise AttributeError("No identifier, as resource is not instantiated.")
 
-        return id
+        return _id
 
     def __setitem(cls, name, value):
         s = super(type(cls), cls)

@@ -6,18 +6,12 @@
 
 from __future__ import print_function # Python 2
 
-# Python stdlib imports
-import copy as _copy
-import functools as _functools
-import textwrap as _textwrap
-
 # External dependencies
 import better_exceptions as _better_exceptions
 
 # Local imports
 import codepost.errors as _errors
 import codepost.util.custom_logging as _logging
-import codepost.api_requestor as _api_requestor
 
 from . import api_resource as _api_resource
 
@@ -47,32 +41,33 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         if self._FIELD_ID in kwargs:
             raise _errors.CannotChooseIDError()
 
-        # FIXME: do kwargs validation
-        data = self._get_data_and_extend(**kwargs)
-
         ret = self._requestor._request(
             endpoint=self.class_endpoint,
             method="POST",
-            data=data,
+            data=kwargs,
         )
         if ret.status_code == 201:
             return _class_type(**ret.json)
 
-    def saveInstanceAsNew(self, **kwargs):
+    def duplicate(self, in_place=False, **kwargs):
         """
-        Create a duplicate of the instantiated API resource. If allowed, this
+        Return a duplicate of the instantiated API resource. If allowed, this
         will make a call to create a new API resource with identical fields but
-        a new ID, and it will update the internal state of the object as well
-        as return the new object.
+        a new ID. If the parameter `in_place` is `True`, it will also update
+        the internal state of the instance, in addition to returning the new
+        object.
         """
-        obj = self.create(**kwargs)
+        
+        data = self._get_data_and_extend(**kwargs)
+        obj = self.create(**data)
 
         # Sanity check
         assert (
             getattr(self, "_OBJECT_NAME", "") ==
             getattr(obj, "_OBJECT_NAME", ""))
 
-        self._data = obj._data
+        if in_place:
+            self._data = obj._data
 
         return self
 
@@ -87,24 +82,29 @@ class ReadableAPIResource(_api_resource.AbstractAPIResource):
         """
         Retrieve an API resource with the provided `id`.
         """
+        _id = id
         _class_type = type(self)
 
+        if not self._validate_id(id=_id):
+            raise _errors.InvalidIDError()
+
         ret = self._requestor._request(
-            endpoint=self.instance_endpoint_by_id(id=id),
+            endpoint=self.instance_endpoint_by_id(id=_id),
             method="GET",
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)
 
-    def refreshInstance(self):
+    def refresh(self):
         """
         Refresh the existing instantiated API resource. This will make a call
         to retrieve the API resource with the same ID as the current instance
         and it will update the internal state of the object.
         """
-        id = self._get_id()
 
-        obj = self.retrieve(id=id)
+        # Will throw an exception if this is a "static" object
+        _id = self._get_id()
+        obj = self.retrieve(id=_id)
 
         # Sanity check
         assert (
@@ -122,31 +122,35 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
     Abstract class for API resources which can be updated (crUd).
     """
 
-    def update(self, id=None, **kwargs):
+    def update(self, id, **kwargs):
         """
         Update an API resource provided its `id` and fields to modify.
         """
-        _id = self._get_id(id=id)
+        _id = id
         _class_type = type(self)
 
-        # FIXME: do kwargs validation
-        data = self._get_data_and_extend(**kwargs)
+        if not self._validate_id(id=_id):
+            raise _errors.InvalidIDError()
         
+        # FIXME: do kwargs validation
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=_id),
             method="PATCH",
-            data=data,
+            data=kwargs,
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)
 
-    def saveInstance(self, **kwargs):
+    def save(self, **kwargs):
         """
         Update the instance of the API resource so as to save all recently
         modified fields.
         """
-        id = self._get_id()
-        obj = self.update(id=id, **kwargs)
+        
+        # FIXME: do kwargs validation
+        # NOTE: "id" is contained in the self._data which is extended
+        data = self._get_data_and_extend(**kwargs)
+        obj = self.update(**data)
 
         # Sanity check
         assert (
@@ -170,18 +174,15 @@ class DeletableAPIResource(_api_resource.AbstractAPIResource):
         deletes the instantiated API resource it has been called on otherwise.
         """
         _id = self._get_id(id=id)
+
+        if not self._validate_id(id=_id):
+            raise _errors.InvalidIDError()
+
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=_id),
             method="DELETE",
         )
         return (ret.status_code == 204)
-
-    def deleteInstance(self):
-        """
-        Delete the API resource of which this object is an instance.
-        """
-        id = self._get_id()
-        return self.delete(id=id)
 
 # =============================================================================
 

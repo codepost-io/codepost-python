@@ -274,6 +274,24 @@ class StaticObjectError(TemplatedRuntimeError):
         {SUPPORT_MESSAGE}
         """
 
+class InvalidIDError(TemplatedRuntimeError):
+    """
+    Run-time error due to a static API call being made without providing any
+    valid identifier `id`.
+    """
+
+    DEFAULT_MESSAGE = """
+        INVALID OR MISSING ID.
+        You are trying to use a static API call but have failed to provide an
+        identifier for your resource using the `id` parameter. Please either
+        create or retrieve an instance object and manipulate it, or only
+        use static API method calls with `id` (that is the `create`,
+        `retrieve`, `update` and `delete` methods on top-level `codepost.*`
+        objects.)
+
+        {SUPPORT_MESSAGE}
+        """
+
 class InvalidAPIResourceError(TemplatedRuntimeError):
     """
     Run-time error due to an inability to extract the internal identifier of

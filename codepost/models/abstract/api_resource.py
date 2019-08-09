@@ -71,6 +71,9 @@ class AbstractAPIResource(object):
 
     def _validate_data(self, data, required=True):
         raise NotImplementedError("abstract class not meant to be used")
+    
+    def _validate_id(self, id):
+        raise NotImplementedError("abstract class not meant to be used")
 
     @property
     def class_endpoint(self):
@@ -119,6 +122,9 @@ class APIResource(AbstractAPIResource):
         for key in kwargs.keys():
             if key in self._field_names:
                 self._data[key] = kwargs[key]
+
+    def _validate_id(self, id):
+        return (id is not None) and (type(id) is int and id > 0)
 
     def _get_id(self, id=None, obj=None):
         """

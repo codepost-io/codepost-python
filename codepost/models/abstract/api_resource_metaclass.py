@@ -197,7 +197,7 @@ class APIResourceMetaclass(type):
                     *APIResourceMetaclass._build_signature(
                         obj=cls,
                         all_optional=True,
-                        with_id=False))(cls.saveInstanceAsNew)
+                        with_id=False))(cls.duplicate)
 
             if _crud.UpdatableAPIResource in bases:
                 cls.update = _forge.sign(
@@ -209,6 +209,6 @@ class APIResourceMetaclass(type):
                     *APIResourceMetaclass._build_signature(
                         obj=cls,
                         all_optional=True,
-                        with_id=False))(cls.saveInstance)
+                        with_id=False))(cls.save)
 
 # =============================================================================

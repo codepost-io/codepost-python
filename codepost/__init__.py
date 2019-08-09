@@ -12,7 +12,7 @@ License: Copyright (c) 2019 codePost, licensed under the MIT license
 
 # Documentation
 
-__version__ = "0.1.2"
+from codepost.version import __version__
 
 # Import sub-modules
 

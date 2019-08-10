@@ -27,6 +27,8 @@ import codepost.util.custom_logging as _logging
 import codepost.api_requestor as _api_requestor
 
 from . import api_crud as _crud
+from . import api_resource as _api_resource
+from . import linked_lists as _linked_lists
 
 # =============================================================================
 
@@ -72,7 +74,25 @@ class APIResourceMetaclass(type):
 
         cls._data.__setitem__(field_name, value)
 
-    def __bound_getitem(cls, field_name=None):
+    def __bound_getitem(cls, field_name=None, field_type=None):
+        data = cls._data.__getitem__(field_name)
+
+        if field_type is not None:
+            if (
+                type(field_type) is _typing._GenericAlias and
+                field_type._name == "List"
+            ):
+                list_type = field_type.__args__[0]
+                if issubclass(list_type, _api_resource.APIResource):
+                    return _linked_lists.LazyAPILinkedList(
+                        iterable=data,
+                        cls=list_type,
+                        parent_cls=type(cls),
+                        parent_id=cls.id,
+                        parent_attribute=field_name,
+                        query_attribute="name",
+                    )
+
         return cls._data.__getitem__(field_name)
 
     def __mk_property(cls, field_name=None, field_type=None, field_doc=None):
@@ -93,7 +113,8 @@ class APIResourceMetaclass(type):
         return property(
 
             fget=_functools.partial(APIResourceMetaclass.__bound_getitem,
-                                    field_name=field_name),
+                                    field_name=field_name,
+                                    field_type=field_type),
 
             fset=_functools.partial(APIResourceMetaclass.__bound_setitem,
                                     field_name=field_name,

@@ -146,12 +146,17 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
         if ret.status_code == 200:
             return _class_type(**ret.json)
 
+    def _pre_save_hook(self):
+        return
+
     def save(self, **kwargs):
         """
         Update the instance of the API resource so as to save all recently
         modified fields.
         """
-        
+
+        self._pre_save_hook()
+
         # FIXME: do kwargs validation
         # NOTE: "id" is contained in the self._data which is extended
         data = self._get_data_and_extend(**kwargs)

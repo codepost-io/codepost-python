@@ -74,7 +74,22 @@ class APIResourceMetaclass(type):
 
         cls._data.__setitem__(field_name, value)
 
+        if cls._cache and field_name in cls._cache:
+            cls._cache[field_name] = value
+
+    def __pre_save_hook(cls):
+        if cls._cache is not None:
+            for (field_name, value) in cls._cache.items():
+                cls._data[field_name] = value._to_serializable_list()
+                value.save()
+
     def __bound_getitem(cls, field_name=None, field_type=None):
+
+        # Initialize cache if need be
+        cls._cache = getattr(cls, "_cache", None)
+        if cls._cache is None:
+            cls._cache = dict()
+
         data = cls._data.__getitem__(field_name)
 
         if field_type is not None:
@@ -83,15 +98,35 @@ class APIResourceMetaclass(type):
                 field_type._name == "List"
             ):
                 list_type = field_type.__args__[0]
+
+                # OneToMany relations between objects
                 if issubclass(list_type, _api_resource.APIResource):
-                    return _linked_lists.LazyAPILinkedList(
-                        iterable=data,
-                        cls=list_type,
-                        parent_cls=type(cls),
-                        parent_id=cls.id,
-                        parent_attribute=field_name,
-                        query_attribute="name",
-                    )
+                    cls._cache[field_name] = cls._cache.get(
+                        field_name,
+                        _linked_lists.LazyAPILinkedList(
+                            iterable=data,
+                            cls=list_type,
+                            parent_cls=type(cls),
+                            parent_id=cls.id,
+                            parent_attribute=field_name,
+                            query_attribute="name",
+                        ))
+                    return cls._cache[field_name]
+
+                # ManyToMany relations with user objects
+                elif issubclass(list_type, str):
+                    cls._cache[field_name] = cls._cache.get(
+                        field_name,
+                        _linked_lists.APILinkedList(
+                            iterable=data,
+                            cls=None,
+                            parent_cls=type(cls),
+                            parent_id=cls.id,
+                            parent_attribute=field_name,
+                            query_attribute=None
+                        ))
+                    return cls._cache[field_name]
+
 
         return cls._data.__getitem__(field_name)
 
@@ -185,6 +220,14 @@ class APIResourceMetaclass(type):
         # Post-process _FIELDS list/dictionary
         if isinstance(fields, list):
             fields = { key: (str, None) for key in fields }
+
+        setattr(cls, "_pre_save_hook",
+                lambda self: self._cache and map(
+                    lambda obj: obj.save(),
+                    self._cache.values()))
+
+        setattr(cls, "_pre_save_hook",
+                lambda self: APIResourceMetaclass.__pre_save_hook(self))
 
         # Define special getter for the ID field
         setattr(cls,

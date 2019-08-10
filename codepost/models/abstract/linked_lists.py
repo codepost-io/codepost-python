@@ -52,7 +52,23 @@ class APILinkedList(list):
         self._parent_attribute = parent_attribute
 
         self._query_attribute = query_attribute
+        self._added = list()
         self._deleted = list()
+
+    def _clone_with_new_list(self, new_list):
+        cloned_obj = APILinkedList(
+            iterable=new_list,
+            cls=self._cls,
+            parent_cls=self._parent_cls,
+            parent_id=self._parent_id,
+            parent_attribute=self._parent_attribute,
+            query_attribute=self._query_attribute
+        )
+
+        cloned_obj._added = self._added
+        cloned_obj._deleted = self._deleted
+
+        return cloned_obj
 
     def _to_serializable_list(self, lst=None):
         if lst is None:
@@ -74,18 +90,23 @@ class APILinkedList(list):
         ]
 
     def append(self, value):
+        # type: (Any) -> APILinkedList
         return self.__add__([value])
 
     def __add__(self, value, *args):
+        # type: (List, tuple) -> APILinkedList
         self._added = getattr(self, "_deleted", list())
 
         new_list = self._misc_to_internal_iterable(
-            iterable=([value] + args)
+            iterable=value
         )
 
         try:
-            obj = super(APILinkedList, self).__add__(new_list)
+            obj = self._clone_with_new_list(
+                super(APILinkedList, self).__add__(new_list)
+            )
             self._added += self._to_serializable_list(lst=new_list)
+            obj._added += self._to_serializable_list(lst=new_list)
             return obj
         except:
             raise

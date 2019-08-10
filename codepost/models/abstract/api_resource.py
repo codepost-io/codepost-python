@@ -62,6 +62,17 @@ class AbstractAPIResource(object):
     _data = None
     _requestor = _api_requestor.STATIC_REQUESTOR
     _static = False
+    _cache = None
+
+    def __getattribute__(self, item):
+        return super(AbstractAPIResource, self).__getattribute__(item)
+
+    def __setattr__(self, item, value):
+        # Reset cache if internal state is modified
+        if item == "_data":
+            self._cache = None
+
+        return super(AbstractAPIResource, self).__setattr__(item, value)
 
     def _get_id(self, id=None, obj=None):
         raise NotImplementedError("abstract class not meant to be used")

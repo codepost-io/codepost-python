@@ -66,7 +66,7 @@ class AbstractAPIResource(object):
     def _get_id(self, id=None, obj=None):
         raise NotImplementedError("abstract class not meant to be used")
 
-    def _get_data_and_extend(self, **kwargs):
+    def _get_data_and_extend(self, static=False, **kwargs):
         raise NotImplementedError("abstract class not meant to be used")
 
     def _validate_data(self, data, required=True):
@@ -204,7 +204,7 @@ class APIResource(AbstractAPIResource):
             self.__dict__["requestor"] = _api_requestor.STATIC_REQUESTOR
         return self
 
-    def _get_data_and_extend(self, **kwargs):
+    def _get_data_and_extend(self, static=False, **kwargs):
         """
         Internal helper method to combine the keyword arguments (with some
         arguments possibly equal to a VOID placeholder value which must be
@@ -215,7 +215,7 @@ class APIResource(AbstractAPIResource):
 
         # If this is a static object, we should ignore self._data
 
-        if not self._static and isinstance(self._data, dict):
+        if not static and (not self._static and isinstance(self._data, dict)):
             # Combine instance data and extended (typically kwargs) argument
             data.update(_copy.deepcopy(self._data))
 

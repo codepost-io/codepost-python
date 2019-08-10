@@ -41,10 +41,13 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         if self._FIELD_ID in kwargs:
             raise _errors.CannotChooseIDError()
 
+        # FIXME: do kwargs validation
+        data = self._get_data_and_extend(static=True, **kwargs)
+
         ret = self._requestor._request(
             endpoint=self.class_endpoint,
             method="POST",
-            data=kwargs,
+            data=data,
         )
         if ret.status_code == 201:
             return _class_type(**ret.json)
@@ -133,10 +136,12 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
             raise _errors.InvalidIDError()
         
         # FIXME: do kwargs validation
+        data = self._get_data_and_extend(static=True, **kwargs)
+
         ret = self._requestor._request(
             endpoint=self.instance_endpoint_by_id(id=_id),
             method="PATCH",
-            data=kwargs,
+            data=data,
         )
         if ret.status_code == 200:
             return _class_type(**ret.json)

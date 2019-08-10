@@ -8,7 +8,7 @@ README = open("README.md").read()
 # (which would trigger some ImportError due to missing dependencies)
 
 version_contents = {}
-with open(os.path.join("codepost", "version.py"), encoding="utf-8") as f:
+with open(os.path.join("codepost", "version.py")) as f:
     exec(f.read(), version_contents)
 
 # This call to setup() does all the work

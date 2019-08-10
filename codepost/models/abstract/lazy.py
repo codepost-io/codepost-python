@@ -34,9 +34,8 @@ import better_exceptions as _better_exceptions
 import requests as _requests
 
 # Local imports
-import codepost
 import codepost.errors as _errors
-import codepost.models.abstract.api_resource as _api_resource
+from . import api_resource as _api_resource
 
 # =============================================================================
 
@@ -138,4 +137,3 @@ def create_lazy_resource(cls, id):
     return LazyAPIResource()
 
 # =============================================================================
-

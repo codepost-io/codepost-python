@@ -7,9 +7,7 @@
 from __future__ import print_function # Python 2
 
 # Local imports
-import codepost
-import codepost.models.abstract.api_resource as _api_resource
-import codepost.models.abstract.lazy as _lazy
+from . import lazy as _lazy
 
 # =============================================================================
 

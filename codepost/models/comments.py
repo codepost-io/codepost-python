@@ -14,6 +14,8 @@ import six as _six
 
 # Local imports
 from . import abstract as _abstract
+from . import files as _files
+from . import rubric_comments as _rubric_comments
 
 # =============================================================================
 

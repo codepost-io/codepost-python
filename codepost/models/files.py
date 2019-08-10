@@ -15,6 +15,8 @@ import six as _six
 # Local imports
 from . import abstract as _abstract
 
+from . import submissions as _submissions
+
 # =============================================================================
 
 @_six.add_metaclass(_abstract.APIResourceMetaclass)

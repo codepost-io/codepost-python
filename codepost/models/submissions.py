@@ -15,7 +15,7 @@ import six as _six
 # Local imports
 from . import abstract as _abstract
 
-from . import assignments as _assignments
+#from . import assignments as _assignments
 from . import files as _files
 
 # =============================================================================

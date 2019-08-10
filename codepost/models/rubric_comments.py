@@ -16,7 +16,7 @@ import six as _six
 from . import abstract as _abstract
 
 from . import comments as _comments
-from . import rubric_categories as _rubric_categories
+#from . import rubric_categories as _rubric_categories
 
 # =============================================================================
 

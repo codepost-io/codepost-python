@@ -23,7 +23,7 @@ import six as _six
 # Local imports
 from . import abstract as _abstract
 
-from . import courses as _courses
+#from . import courses as _courses
 from . import rubric_categories as _rubric_categories
 from . import submissions as _submissions
 

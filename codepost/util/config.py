@@ -14,6 +14,7 @@ import json as _json
 import logging as _logging
 import os as _os
 import time as _time
+import typing as _typing
 import sys as _sys
 try:
     # Python 3
@@ -122,9 +123,77 @@ API key could not be detected.
 
 # =============================================================================
 
+def find_config_file(search_paths=None):
+    # type: (_typing.List[str]) -> _typing.Optional[str]
+    """
+    Searches through the provided `search_paths` for the first existing file
+    that is found. Typical names for the configuration file include:
+    `codepost-config.yml` and `.codepost-config.yml` in the working directory.
+
+    :param search_paths: The search paths. If not provided, the function will
+        use the `DEFAULT_CONFIG_PATHS` constant.
+
+    :return: The path of a configuration file if one is found; `None` otherwise
+    """
+
+    location = None
+
+    # By default, use DEFAULT_CONFIG_PATHS
+    if search_paths is None:
+        search_paths = DEFAULT_CONFIG_PATHS
+
+    _logger.debug(
+        "Search for configuration file among: {}".format(search_paths))
+
+    for config_path in search_paths:
+
+        # Expand home directory ~ and make path absolute if relative
+        config_path = _os.path.abspath(_os.path.expanduser(config_path))
+
+        # Check whether there is a file at that location
+        if _os.path.exists(config_path) and _os.path.isfile(config_path):
+
+            location = config_path
+            _logger.debug("Configuration found: {}".format(config_path))
+            break
+
+        else:
+            _logger.debug("No config file here: {}".format(config_path))
+
+    return location
+
+def read_config_file(search_paths=None):
+    # type: (_typing.List[str]) -> _typing.Optional[dict]
+    """
+    Loads and returns a configuration file if a valid one can be found; `None`
+    otherwise.
+
+    :param search_paths: The search paths. If not provided, the function will
+        use the `DEFAULT_CONFIG_PATHS` constant.
+
+    :return: A dictionary containing the configuration settings, if a valid
+        configuration has been found; `None` otherwise.
+    """
+    config_path = find_config_file(search_paths=search_paths)
+
+    if config_path is not None:
+
+        config = None
+        try:
+            config = _load_yaml(open(config_path), Loader=_YamlLoader)
+        except:
+            _logger.debug(
+                "Error reading configuration file: {}".format(config_path))
+
+            config = None
+
+        return config
+
+# =============================================================================
+
 @_logging.log_call
 def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
-    # type: (str) -> bool
+    # type: (str, bool, str, bool) -> bool
     """
     Checks whether a provided codePost API key is valid.
     """
@@ -252,7 +321,7 @@ def validate_api_key(api_key, log_outcome=False, caption="", refresh=False):
 
 @_logging.log_call
 def configure_api_key(api_key=None, override=True, log_outcome=True):
-    # type: (str, bool) -> str
+    # type: (str, bool, bool) -> str
     """
     Configures the API key to authenticate with the codePost API, by
     looking at the following sources:
@@ -349,32 +418,10 @@ def configure_api_key(api_key=None, override=True, log_outcome=True):
 
     # YAML configuration API_KEY
 
-    location = None
+    location = find_config_file()
+    config = read_config_file()
 
-    for config_path in DEFAULT_CONFIG_PATHS:
-        config_path = _os.path.abspath(_os.path.expanduser(config_path))
-        if _os.path.exists(config_path) and _os.path.isfile(config_path):
-            location = config_path
-            break
-        else:
-            _logger.debug(
-                "No config file here: {}".format(
-                    config_path))
-
-    if location != None:
-        _logger.debug("Configuration file detected: {}".format(location))
-
-        config = None
-        try:
-            config = _load_yaml(open(location), Loader=_YamlLoader)
-        except:
-            config = None
-
-        if config == None:
-            _logger.debug(
-                "Configuration file detected: "
-                "Loading failed, no valid API_KEY.")
-            return None
+    if config is not None:
 
         if config.get("api_key", "") == "":
             _logger.debug(

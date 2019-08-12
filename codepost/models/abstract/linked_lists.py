@@ -22,6 +22,7 @@ class APILinkedList(list):
     _parent_attribute = None
     _query_attribute = None
     _deleted = None
+    _query_uniqueness = True
 
     def _misc_to_internal_iterable(self, iterable):
         return iterable
@@ -33,7 +34,8 @@ class APILinkedList(list):
             parent_cls=None,
             parent_id=None,
             parent_attribute=None,
-            query_attribute="name"
+            query_attribute="name",
+            query_uniqueness=True,
     ):
         # Configure the class
         self._cls = cls
@@ -50,6 +52,7 @@ class APILinkedList(list):
         self._parent_attribute = parent_attribute
 
         self._query_attribute = query_attribute
+        self._query_uniqueness = query_uniqueness
         self._added = list()
         self._deleted = list()
 
@@ -60,7 +63,8 @@ class APILinkedList(list):
             parent_cls=self._parent_cls,
             parent_id=self._parent_id,
             parent_attribute=self._parent_attribute,
-            query_attribute=self._query_attribute
+            query_attribute=self._query_attribute,
+            query_uniqueness=self._query_uniqueness
         )
 
         cloned_obj._added = self._added
@@ -79,13 +83,21 @@ class APILinkedList(list):
 
     def by_name(self, name):
         if name is None:
-            return []
+            return None if self._query_uniqueness else []
 
-        return [
+        filter_result = [
             item
             for item in self
             if getattr(item, self._query_attribute, None) == name
         ]
+
+        if self._query_uniqueness:
+            # FIXME: we could raise an exception here if len(filter_result) > 1
+
+            # Return first value, or None if the list is empty
+            return next(iter(filter_result), None)
+        else:
+            return filter_result
 
     def append(self, value):
         # type: (Any) -> APILinkedList

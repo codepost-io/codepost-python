@@ -110,6 +110,7 @@ class APIResourceMetaclass(type):
                             parent_id=cls.id,
                             parent_attribute=field_name,
                             query_attribute="name",
+                            query_uniqueness=True,
                         ))
                     return cls._cache[field_name]
 
@@ -123,7 +124,8 @@ class APIResourceMetaclass(type):
                             parent_cls=type(cls),
                             parent_id=cls.id,
                             parent_attribute=field_name,
-                            query_attribute=None
+                            query_attribute=None,
+                            query_uniqueness=True,
                         ))
                     return cls._cache[field_name]
 

@@ -1,13 +1,20 @@
-from codepost import __version__
+import os
 from setuptools import setup, find_packages
 
 # The text of the README file
 README = open("README.md").read()
 
+# Get the version number without importing our package
+# (which would trigger some ImportError due to missing dependencies)
+
+version_contents = {}
+with open(os.path.join("codepost", "version.py")) as f:
+    exec(f.read(), version_contents)
+
 # This call to setup() does all the work
 setup(
     name="codepost",
-    version=__version__,
+    version=version_contents["__version__"],
     description="Python bindings for the codePost API",
     long_description=README,
     long_description_content_type="text/markdown",

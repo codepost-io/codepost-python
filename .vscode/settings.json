@@ -4,14 +4,19 @@
     "editor.insertSpaces": true,
     "editor.tabSize": 4  
   },
-  "python.analysis.downloadChannel": "beta",
+  "python.analysis.logLevel": "Trace",
+  //"python.analysis.downloadChannel": "beta",
   "python.analysis.disabled": [
     "unresolved-import"
   ],
-  "python.pythonPath": "/Users/jlumbroso/.local/share/virtualenvs/codePost-api-python-_uTOs40F/bin/python",
+  "python.pythonPath": "/Users/jlumbroso/.local/share/virtualenvs/codepost-python-69mBCYfz/bin/python",
   "editor.fontSize": 12, //16
   "python.linting.pylintEnabled": true,
   "python.linting.pylintArgs": [
       "--enable=W0614"
+  ],
+  "python.linting.enabled": true,
+  "python.autoComplete.extraPaths": [
+    "./codepost"
   ]
 }

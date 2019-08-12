@@ -153,7 +153,7 @@ class APIRequestor(object):
             "X-codePost-SDK-User-Agent": _json.dumps(diag)
         }
 
-        if method.upper() == "POST" and not "Content-Type" in headers:
+        if method.upper() in ["POST", "PATCH"] and not "Content-Type" in headers:
             headers["Content-Type"] = "application/json"
 
         if method.upper() == "POST":
@@ -195,7 +195,7 @@ class APIRequestor(object):
         if "application/json" in kws["headers"].get("Content-Type", ""):
             if "data" in kws and not isinstance(type(kws["data"]), str):
                 kws["data"] = _json.dumps(kws["data"])
-
+        
         ret = self._client.request(
             url=urljoin(self._base_url, endpoint),
             **kws

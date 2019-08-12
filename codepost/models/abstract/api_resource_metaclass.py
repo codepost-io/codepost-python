@@ -27,6 +27,8 @@ import codepost.util.custom_logging as _logging
 import codepost.api_requestor as _api_requestor
 
 from . import api_crud as _crud
+from . import api_resource as _api_resource
+from . import linked_lists as _linked_lists
 
 # =============================================================================
 
@@ -46,14 +48,14 @@ class APIResourceMetaclass(type):
     def __getid(cls):
         id_field_name = getattr(cls, "_FIELD_ID", "id")
         data = getattr(cls, "_data", dict())
-        id = data.get(id_field_name, None)
+        _id = data.get(id_field_name, None)
 
         # If no identifier, raise exception
-        if id == None:
+        if _id == None:
             raise _errors.StaticObjectError()
             #raise AttributeError("No identifier, as resource is not instantiated.")
 
-        return id
+        return _id
 
     def __setitem(cls, name, value):
         s = super(type(cls), cls)
@@ -72,7 +74,62 @@ class APIResourceMetaclass(type):
 
         cls._data.__setitem__(field_name, value)
 
-    def __bound_getitem(cls, field_name=None):
+        if cls._cache and field_name in cls._cache:
+            cls._cache[field_name] = value
+
+    def __pre_save_hook(cls):
+        if cls._cache is not None:
+            for (field_name, value) in cls._cache.items():
+                cls._data[field_name] = value._to_serializable_list()
+                value.save()
+
+    def __bound_getitem(cls, field_name=None, field_type=None):
+
+        # Initialize cache if need be
+        cls._cache = getattr(cls, "_cache", None)
+        if cls._cache is None:
+            cls._cache = dict()
+
+        data = cls._data.__getitem__(field_name)
+
+        if field_type is not None:
+            if (
+                type(field_type) is _typing._GenericAlias and
+                field_type._name == "List"
+            ):
+                list_type = field_type.__args__[0]
+
+                # OneToMany relations between objects
+                if issubclass(list_type, _api_resource.APIResource):
+                    cls._cache[field_name] = cls._cache.get(
+                        field_name,
+                        _linked_lists.LazyAPILinkedList(
+                            iterable=data,
+                            cls=list_type,
+                            parent_cls=type(cls),
+                            parent_id=cls.id,
+                            parent_attribute=field_name,
+                            query_attribute="name",
+                            query_uniqueness=True,
+                        ))
+                    return cls._cache[field_name]
+
+                # ManyToMany relations with user objects
+                elif issubclass(list_type, str):
+                    cls._cache[field_name] = cls._cache.get(
+                        field_name,
+                        _linked_lists.APILinkedList(
+                            iterable=data,
+                            cls=None,
+                            parent_cls=type(cls),
+                            parent_id=cls.id,
+                            parent_attribute=field_name,
+                            query_attribute=None,
+                            query_uniqueness=True,
+                        ))
+                    return cls._cache[field_name]
+
+
         return cls._data.__getitem__(field_name)
 
     def __mk_property(cls, field_name=None, field_type=None, field_doc=None):
@@ -93,7 +150,8 @@ class APIResourceMetaclass(type):
         return property(
 
             fget=_functools.partial(APIResourceMetaclass.__bound_getitem,
-                                    field_name=field_name),
+                                    field_name=field_name,
+                                    field_type=field_type),
 
             fset=_functools.partial(APIResourceMetaclass.__bound_setitem,
                                     field_name=field_name,
@@ -165,6 +223,14 @@ class APIResourceMetaclass(type):
         if isinstance(fields, list):
             fields = { key: (str, None) for key in fields }
 
+        setattr(cls, "_pre_save_hook",
+                lambda self: self._cache and map(
+                    lambda obj: obj.save(),
+                    self._cache.values()))
+
+        setattr(cls, "_pre_save_hook",
+                lambda self: APIResourceMetaclass.__pre_save_hook(self))
+
         # Define special getter for the ID field
         setattr(cls,
                 "id",
@@ -197,7 +263,7 @@ class APIResourceMetaclass(type):
                     *APIResourceMetaclass._build_signature(
                         obj=cls,
                         all_optional=True,
-                        with_id=False))(cls.saveInstanceAsNew)
+                        with_id=False))(cls.duplicate)
 
             if _crud.UpdatableAPIResource in bases:
                 cls.update = _forge.sign(
@@ -209,6 +275,6 @@ class APIResourceMetaclass(type):
                     *APIResourceMetaclass._build_signature(
                         obj=cls,
                         all_optional=True,
-                        with_id=False))(cls.saveInstance)
+                        with_id=False))(cls.save)
 
 # =============================================================================

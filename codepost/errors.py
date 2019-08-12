@@ -274,6 +274,79 @@ class StaticObjectError(TemplatedRuntimeError):
         {SUPPORT_MESSAGE}
         """
 
+class InvalidIDError(TemplatedRuntimeError):
+    """
+    Run-time error due to a static API call being made without providing any
+    valid identifier `id`.
+    """
+
+    DEFAULT_MESSAGE = """
+        INVALID OR MISSING ID.
+        You are trying to use a static API call but have failed to provide an
+        identifier for your resource using the `id` parameter. Please either
+        create or retrieve an instance object and manipulate it, or only
+        use static API method calls with `id` (that is the `create`,
+        `retrieve`, `update` and `delete` methods on top-level `codepost.*`
+        objects.)
+
+        {SUPPORT_MESSAGE}
+        """
+
+class InvalidAPIResourceError(TemplatedRuntimeError):
+    """
+    Run-time error due to an inability to extract the internal identifier of
+    an API resource that is being used by the API.
+    """
+
+    DEFAULT_MESSAGE = """
+        INVALID API RESOURCE.
+        One of the API methods you are calling, expects an API resource as one
+        of its parameters (for instance, if you are calling `file.create`,
+        this method will expect to be provided the submission to which a file
+        must be added). You provided something that is either `None` or not
+        an API resource.
+
+        {SUPPORT_MESSAGE}
+        """
+
+class UnknownAPIResourceError(TemplatedRuntimeError):
+    """
+    Run-time error due to an inability to extract the internal identifier of
+    an API resource that is being used by the API for an unknown reason.
+    """
+
+    DEFAULT_MESSAGE = """
+        INVALID API RESOURCE IDENTIFIER.
+        One of the API methods you are calling is trying to obtain the internal
+        identifier for an API resource that is required to fulfill your query.
+        Unfortunately, this was not successful because an identifier that was
+        provided is either `None`, not an integer, or a negative integer. This
+        could be either an identifier directly provided by you, or that is the
+        result of internal computations.
+
+        {SUPPORT_MESSAGE}
+        """
+
+# =============================================================================
+
+class CannotChooseIDError(TemplatedRuntimeError):
+    """
+    Run-time error thrown when a CREATE call is made with a user-provided `id`
+    parameter: The API chooses the identifier for new resources, these cannot
+    be user-selected.
+    """
+
+    DEFAULT_MESSAGE = """
+        CANNOT CHOOSE ID OF CREATED RESOURCE.
+        You are trying to create a codePost API resource, but you are
+        attempting to provide an identifier. The codePost API automatically
+        assigns a new identifier to resource it creates, and these cannot be
+        user-selected. If you did not make a call to a `create` method with
+        an `id` parameter, there may be some other underlying issue.
+
+        {SUPPORT_MESSAGE}
+        """
+
 # =============================================================================
 
 class UploadError(TemplatedRuntimeError):

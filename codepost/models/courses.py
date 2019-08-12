@@ -9,24 +9,29 @@ from __future__ import print_function # Python 2
 # Python stdlib imports
 import typing as _typing
 
+# External dependencies
+import six as _six
+
 # Local imports
 from . import abstract as _abstract
+from . import assignments as _assignments
+from . import sections as _sections
 
 # =============================================================================
 
+@_six.add_metaclass(_abstract.APIResourceMetaclass)
 class Courses(
     _abstract.APIResource,
     _abstract.ReadableAPIResource,
     _abstract.UpdatableAPIResource,
 ):
-    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "courses"
     _FIELD_ID = "id"
     _FIELDS = {
         "name":                         (str, "The course's name (e.g. 'CS 101')."),
         "period":                       (str, "The course's period (e.g. 'Fall 2019'). This field allows you to create multiple objects which represent instances of the same course over different periods (e.g. every semester)."),
-        "assignments":                  (_typing.List, "IDs of the Assignments in this course."),
-        "sections":                     (_typing.List, "IDs of the Sections in this course."),
+        "assignments":                  (_typing.List[_assignments.Assignments], "IDs of the Assignments in this course."),
+        "sections":                     (_typing.List[_sections.Sections], "IDs of the Sections in this course."),
         "sendReleasedSubmissionsToBack":(bool, "A course setting. If True, submissions released by graders will be sent to the back of the grading queue. This ensures that released submissions will be re-claimed only after all other Submissions have been claimed."),
         "showStudentsStatistics":       (bool, "A course setting. If True, students will be able to view the Mean and Median of this Course's published Assignments."),
         "timezone":                     (str, "A course setting. Must be a valid pytz timezone."),
@@ -38,8 +43,11 @@ class Courses(
     _FIELDS_REQUIRED = [ "name", "period" ]
 
     def list_available(self, name=None, period=None):
+        return list(self.iter_available(name=name, period=period))
+
+    def iter_available(self, name=None, period=None):
         """
-        Returns the list of all courses that the authenticated user (as
+        Returns a generator of all courses that the authenticated user (as
         identified by the API key) has administrative access to.
 
         Optionally, it is possible to filter courses according to their `name`
@@ -59,18 +67,18 @@ class Courses(
 
         if ret.status_code == 200:
             # Returns a list of courses
-            course_list = list(map(lambda kws: _class_type(**kws), ret.json))
+            course_iter = map(lambda kws: _class_type(**kws), ret.json)
 
             # Optionally filter according to the `name` parameter
             if name:
-                course_list = filter(lambda c: c.name == name, course_list)
+                course_iter = filter(lambda c: c.name == name, course_iter)
 
             # Optionally filter according to the `period` parameter
             if period:
-                course_list = filter(lambda c: c.period == period, course_list)
+                course_iter = filter(lambda c: c.period == period, course_iter)
 
-            return course_list
+            return course_iter
 
-        return []
+        return iter(())
 
 # =============================================================================

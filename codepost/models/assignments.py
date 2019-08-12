@@ -17,13 +17,19 @@ except ImportError: # pragma: no cover
     from urlparse import urljoin as _urljoin
     from urllib import urlencode as _urlencode
 
+# External dependencies
+import six as _six
+
 # Local imports
 from . import abstract as _abstract
 
+#from . import courses as _courses
+from . import rubric_categories as _rubric_categories
 from . import submissions as _submissions
 
 # =============================================================================
 
+@_six.add_metaclass(_abstract.APIResourceMetaclass)
 class Assignments(
     _abstract.APIResource,
     _abstract.CreatableAPIResource,
@@ -31,8 +37,6 @@ class Assignments(
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
 ):
-    __metaclass__ = _abstract.APIResourceMetaclass
-
     _OBJECT_NAME = "assignments"
     _FIELD_ID = "id"
     _FIELDS = {
@@ -41,7 +45,7 @@ class Assignments(
         "points":           (int, "The total number of points possible in this assignment."),
         "isReleased":       (bool, ("If True, finalized submissions will be viewable by students. " +
                                     "See Who can view a submission? for more details.")),
-        "rubricCategories": (_typing.List, "A list of RubricCategories, which constitute this assignment's rubric."),
+        "rubricCategories": (_typing.List[_rubric_categories.RubricCategories], "A list of RubricCategories, which constitute this assignment's rubric."),
         "sortKey":          (int, "Key that defines how Assignments are sorted within the codePost UI."),
         "hideGrades":       (bool, ("An Assignment setting. " +
                                     "If True, students won't be able to view their submission grades for " +

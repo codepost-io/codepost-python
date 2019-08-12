@@ -55,16 +55,35 @@ class AbstractAPIResource(object):
     Abstract class type for a codePost API resource.
     """
 
-    _data = dict()
+    # Class constants
+    _FIELD_ID = "id"
+    
+    # Class attributes
+    _data = None
     _requestor = _api_requestor.STATIC_REQUESTOR
+    _static = False
+    _cache = None
 
-    def _get_id(self, id=None):
+    def __getattribute__(self, item):
+        return super(AbstractAPIResource, self).__getattribute__(item)
+
+    def __setattr__(self, item, value):
+        # Reset cache if internal state is modified
+        if item == "_data":
+            self._cache = None
+
+        return super(AbstractAPIResource, self).__setattr__(item, value)
+
+    def _get_id(self, id=None, obj=None):
         raise NotImplementedError("abstract class not meant to be used")
 
-    def _get_data_and_extend(self, **kwargs):
+    def _get_data_and_extend(self, static=False, **kwargs):
         raise NotImplementedError("abstract class not meant to be used")
 
     def _validate_data(self, data, required=True):
+        raise NotImplementedError("abstract class not meant to be used")
+    
+    def _validate_id(self, id):
         raise NotImplementedError("abstract class not meant to be used")
 
     @property
@@ -85,13 +104,8 @@ class APIResource(AbstractAPIResource):
     Base class type to store and manipulate a codePost API resource.
     """
 
-    # Class constants
-    _FIELD_ID = "id"
-
     # Class attributes
-    _data = None
     _field_names = None
-    _static = False
 
     def __init__(self, requestor=None, static=False, **kwargs):
 
@@ -120,21 +134,70 @@ class APIResource(AbstractAPIResource):
             if key in self._field_names:
                 self._data[key] = kwargs[key]
 
-    def _get_id(self, id=None):
-        if id == None:
-            if self._static:
-                raise _errors.StaticObjectError()
+    def _validate_id(self, id):
+        return (id is not None) and (type(id) is int and id > 0)
 
-            data = getattr(self, "_data", None)
-            if isinstance(data, dict) and "id" in data and data["id"]:
-                id = data["id"]
+    def _get_id(self, id=None, obj=None):
+        """
+        Obtain the internal identifier of an API resource based on the provided
+        arguments, using the following resolution order:
 
-        return id
+        1. If the `obj` parameter is provided with a valid API resource object
+           or some integer ID representative of an object, extract identifier
+           of that object.
+        
+        2. If the `id` parameter is provided with a valid positive integer,
+           return `id`.
+        
+        3. Otherwise, if the current object is an instantiated API resource,
+           return the internal identifier of that object.
+        """
+
+        # CASE 1: Obtain ID from an API resource object.
+        if obj is not None:
+
+            # Seems we are asked to extract ID from an object
+            if isinstance(obj, AbstractAPIResource):
+                # Delegate to its own `_get_id` method
+                return obj._get_id(id=id)
+            
+            # Seems we are asked to use an ID as an object
+            elif isinstance(obj, int):
+                return self._get_id(id=obj)
+
+            else:
+                raise _errors.InvalidAPIResourceError()
+        
+        # CASE 2: Obtain ID from provided integer.
+        if id is not None:
+
+            if isinstance(id, int) and id > 0:
+                return id
+
+            raise _errors.UnknownAPIResourceError()
+        
+        # CASE 3: Obtain ID from instance's data
+        if self._static:
+            raise _errors.StaticObjectError()
+        
+        data = getattr(self, "_data", None)
+        if data is None or not isinstance(data, dict):
+            raise _errors.InvalidAPIResourceError()
+        
+        if self._FIELD_ID in data:
+            return self._get_id(id=data[self._FIELD_ID])
+
+        # If we made it here, then something went wrong
+        raise _errors.UnknownAPIResourceError()
 
     def _validate_data(self, data, required=True):
         return True
 
     def  __getstate__(self):
+        """
+        Returns the full state of the API resource, except for the `requestor`
+        object which cannot be pickled.
+        """
         state = dict(self.__dict__)
         if "_requestor" in state:
             # This class cannot be pickled for the moment
@@ -142,17 +205,28 @@ class APIResource(AbstractAPIResource):
         return state
 
     def __setstate__(self, state):
+        """
+        Reloads the full state of the API resource, except for the `requestor`
+        object, which is replaced by the standard static requestor
+        (`STATIC_REQUESTOR`).
+        """
         self.__dict__ = state
         if self.__dict__.get("requestor", None) is None:
             self.__dict__["requestor"] = _api_requestor.STATIC_REQUESTOR
         return self
 
-    def _get_data_and_extend(self, **kwargs):
+    def _get_data_and_extend(self, static=False, **kwargs):
+        """
+        Internal helper method to combine the keyword arguments (with some
+        arguments possibly equal to a VOID placeholder value which must be
+        ignored) with, possibly, the internal representation of the
+        instantiated API resource.
+        """
         data = dict()
 
         # If this is a static object, we should ignore self._data
 
-        if not self._static and isinstance(self._data, dict):
+        if not static and (not self._static and isinstance(self._data, dict)):
             # Combine instance data and extended (typically kwargs) argument
             data.update(_copy.deepcopy(self._data))
 
@@ -182,6 +256,10 @@ class APIResource(AbstractAPIResource):
 
     @property
     def class_endpoint(self):
+        """
+        The base endpoint designating the current kind of API resource, thus
+        if the API resource is an assignment, then `/assignments/`
+        """
         classname = getattr(self, "_OBJECT_NAME", "")
         if classname:
             classname = classname.replace("..", "/{}/")
@@ -190,26 +268,49 @@ class APIResource(AbstractAPIResource):
             return endpoint
 
     def instance_endpoint_by_id(self, id=None):
-        if id == None and getattr(self, "_data", None):
-            id = self._data.get("id", None)
-        if id:
+        """
+        Returns the endpoint designating some instantiated API resource of the
+        same kind. If no `id` is provided, will use the `id` of the currently
+        instantiated resource. If this is called from a static object, then
+        returns `None`.
+        """
+        _id = self._get_id(id=id)
+
+        if _id:
+            # CASE 1: The class end point might have a formatting parameter
+            # NOTE: This is for the weird case of submissions of an assignment
             try:
-                tmp = self.class_endpoint.format(id)
+                tmp = self.class_endpoint.format(_id)
                 if tmp != self.class_endpoint:
                     return tmp
             except IndexError: # means formatting didn't work
                 pass
-            return urljoin(self.class_endpoint, str(id))
+            
+            # CASE 2: The class end point has not formatting parameter
+            # NOTE: Trailing slash important (API bug)
+            return urljoin(self.class_endpoint, "{}/".format(_id))
 
     @property
     def instance_endpoint(self):
+        """
+        The endpoint designating the currently instantiated API resource, thus
+        if the API resource is an assignment with ID 1, then `/assignments/1/`.
+        """
         if getattr(self, "_data", None):
             return self.instance_endpoint_by_id(id=self._data.get("id"))
 
     def _request(self, **kwargs):
+        """
+        Make an HTTP request through the API resource's underlying requestor
+        object.
+        """
         self._requestor._request(**kwargs)
 
     def __repr__(self):
+        """
+        Provide a representation of the API resource, as a dump of its internal
+        dictionary.
+        """
         if getattr(self, "_data", None):
             return self._data.__repr__()
         return dict().__repr__()

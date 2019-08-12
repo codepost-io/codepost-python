@@ -9,11 +9,17 @@ from __future__ import print_function # Python 2
 # Python stdlib imports
 import typing as _typing
 
+# External dependencies
+import six as _six
+
 # Local imports
 from . import abstract as _abstract
+#from . import files as _files
+#from . import rubric_comments as _rubric_comments
 
 # =============================================================================
 
+@_six.add_metaclass(_abstract.APIResourceMetaclass)
 class Comments(
     _abstract.APIResource,
     _abstract.CreatableAPIResource,
@@ -21,7 +27,6 @@ class Comments(
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
 ):
-    __metaclass__ = _abstract.APIResourceMetaclass
     _OBJECT_NAME = "comments"
     _FIELD_ID = "id"
     _FIELDS = {

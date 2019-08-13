@@ -18,6 +18,7 @@ from codepost.version import __version__
 
 from . import util
 from .util.config import configure_api_key
+from .util.config import find_config_file, read_config_file
 
 # Configure credentials
 

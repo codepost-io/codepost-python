@@ -67,7 +67,7 @@ class Courses(
 
         if ret.status_code == 200:
             # Returns a list of courses
-            course_iter = map(lambda kws: _class_type(**kws), ret.json())
+            course_iter = map(lambda kws: _class_type(**kws), ret.json)
 
             # Optionally filter according to the `name` parameter
             if name:

@@ -136,9 +136,9 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
             raise _errors.InvalidIDError()
 
         # FIXME: do kwargs validation
-        # Note: exclude_read_only is a form of kwargs validation (removing any read-only fields
-        # which are included). In the future, we could choose to warn they client when they
-        # attempt to update a read-only field (rather than siliently prrotecting them).
+        # Note: exclude_read_only is redundant kwargs validation (removing any read-only fields
+        # which are included). It is redundant because the type signature of cls.update is already
+        # factoried to exclude read_only fields
         data = self._get_data_and_extend(static=True, exclude_read_only=True, **kwargs)
 
         ret = self._requestor._request(

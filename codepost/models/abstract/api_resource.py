@@ -57,7 +57,7 @@ class AbstractAPIResource(object):
 
     # Class constants
     _FIELD_ID = "id"
-    
+
     # Class attributes
     _data = None
     _requestor = _api_requestor.STATIC_REQUESTOR
@@ -82,7 +82,7 @@ class AbstractAPIResource(object):
 
     def _validate_data(self, data, required=True):
         raise NotImplementedError("abstract class not meant to be used")
-    
+
     def _validate_id(self, id):
         raise NotImplementedError("abstract class not meant to be used")
 
@@ -145,10 +145,10 @@ class APIResource(AbstractAPIResource):
         1. If the `obj` parameter is provided with a valid API resource object
            or some integer ID representative of an object, extract identifier
            of that object.
-        
+
         2. If the `id` parameter is provided with a valid positive integer,
            return `id`.
-        
+
         3. Otherwise, if the current object is an instantiated API resource,
            return the internal identifier of that object.
         """
@@ -160,14 +160,14 @@ class APIResource(AbstractAPIResource):
             if isinstance(obj, AbstractAPIResource):
                 # Delegate to its own `_get_id` method
                 return obj._get_id(id=id)
-            
+
             # Seems we are asked to use an ID as an object
             elif isinstance(obj, int):
                 return self._get_id(id=obj)
 
             else:
                 raise _errors.InvalidAPIResourceError()
-        
+
         # CASE 2: Obtain ID from provided integer.
         if id is not None:
 
@@ -175,15 +175,15 @@ class APIResource(AbstractAPIResource):
                 return id
 
             raise _errors.UnknownAPIResourceError()
-        
+
         # CASE 3: Obtain ID from instance's data
         if self._static:
             raise _errors.StaticObjectError()
-        
+
         data = getattr(self, "_data", None)
         if data is None or not isinstance(data, dict):
             raise _errors.InvalidAPIResourceError()
-        
+
         if self._FIELD_ID in data:
             return self._get_id(id=data[self._FIELD_ID])
 
@@ -215,7 +215,7 @@ class APIResource(AbstractAPIResource):
             self.__dict__["requestor"] = _api_requestor.STATIC_REQUESTOR
         return self
 
-    def _get_data_and_extend(self, static=False, **kwargs):
+    def _get_data_and_extend(self, static=False, exclude_read_only=False, **kwargs):
         """
         Internal helper method to combine the keyword arguments (with some
         arguments possibly equal to a VOID placeholder value which must be
@@ -244,12 +244,14 @@ class APIResource(AbstractAPIResource):
 
             data.update(kwargs_copy)
 
-        # Remove extraneous (unexpected) data + blank fields
+        # Remove extraneous (unexpected) data + blank fields + read_only fields (if read_only arg is
+        # switched on)
+        read_only_filter = (lambda k: k not in self._FIELDS_READ_ONLY) if exclude_read_only else (lambda k: True)
 
         new_data = {
             key : data[key]
             for key in data.keys()
-            if (key in self._field_names) and (data[key] != None)
+            if (key in self._field_names) and (data[key] != None) and (read_only_filter(key))
         }
 
         return new_data
@@ -285,7 +287,7 @@ class APIResource(AbstractAPIResource):
                     return tmp
             except IndexError: # means formatting didn't work
                 pass
-            
+
             # CASE 2: The class end point has not formatting parameter
             # NOTE: Trailing slash important (API bug)
             return urljoin(self.class_endpoint, "{}/".format(_id))

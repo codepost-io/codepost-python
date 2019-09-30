@@ -60,7 +60,7 @@ class CreatableAPIResource(_api_resource.AbstractAPIResource):
         the internal state of the instance, in addition to returning the new
         object.
         """
-        
+
         data = self._get_data_and_extend(**kwargs)
         obj = self.create(**data)
 
@@ -134,7 +134,7 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
 
         if not self._validate_id(id=_id):
             raise _errors.InvalidIDError()
-        
+
         # FIXME: do kwargs validation
         data = self._get_data_and_extend(static=True, **kwargs)
 
@@ -159,7 +159,7 @@ class UpdatableAPIResource(_api_resource.AbstractAPIResource):
 
         # FIXME: do kwargs validation
         # NOTE: "id" is contained in the self._data which is extended
-        data = self._get_data_and_extend(**kwargs)
+        data = self._get_data_and_extend(exclude_read_only=True, **kwargs)
         obj = self.update(**data)
 
         # Sanity check

@@ -39,7 +39,7 @@ class Files(
         'submission': (int, "The ID of the file's parent Submission."),
         'comments': (_typing.List[_comments.Comments], 'The IDs of all comments applied to this file.')
     }
-    _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files" ]
+    _FIELDS_READ_ONLY = [ "dateEdited", "grade", "comments" ]
     _FIELDS_REQUIRED = [ "name", "code", "extension", "submission" ]
 
 # =============================================================================

@@ -198,7 +198,7 @@ class APIResourceMetaclass(type):
             # Create forge parameters
 
             for (key, val) in fields.items():
-                if key  in obj._FIELDS_READ_ONLY:
+                if key in obj._FIELDS_READ_ONLY:
                     continue
 
                 if all_optional or not key in obj._FIELDS_REQUIRED:

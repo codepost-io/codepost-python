@@ -37,7 +37,6 @@ setup(
         "eliot",
         "python_forge",
         "six",
-        "typeguard",
         "typing",
     ],
     include_package_data=True,

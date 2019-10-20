@@ -23,7 +23,6 @@ python-forge = "*"
 PyYAML = "*"
 requests = "*"
 six = "*"
-typeguard = "*"
 codepost = {path = ".", editable = true}
 typing = "*"
 

@@ -35,9 +35,10 @@ setup(
         "blessings",
         "colorama",
         "eliot",
-        "python_forge",
+        "python_forge;python_version>'3.5'",
         "six",
         "typing",
+        "enum34;python_version<'3.4'"
     ],
     include_package_data=True,
 )

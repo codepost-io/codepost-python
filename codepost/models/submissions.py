@@ -17,6 +17,7 @@ from . import abstract as _abstract
 
 #from . import assignments as _assignments
 from . import files as _files
+from . import submission_tests as _submission_tests
 
 # =============================================================================
 
@@ -44,9 +45,10 @@ class Submissions(
         "The time when this object was last edited. Edits include changes to the submission's fields and any updates or additions to child objects (such as a File or Comment)."),
         'grade': (int,
         'Integer value specifying the number of points earned by the submission, accounting for all linked Comments and Rubric Comments. This field is calculated by the codePost API whenever the submission is finalized.'),
-        'files': (_typing.List[_files.Files], "A list of the submission's file IDs.")
+        'files': (_typing.List[_files.Files], "A list of the submission's Files."),
+        'tests': (_typing.List[_submission_tests.SubmissionTests], "A list of the submission's Submission Tests.")
     }
-    _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files" ]
+    _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files", 'tests' ]
     _FIELDS_REQUIRED = [ "assignment", "students" ]
 
 # =============================================================================

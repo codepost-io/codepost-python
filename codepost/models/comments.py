@@ -45,7 +45,8 @@ class Comments(
         'file': (int, 'The ID of the file to which this Comment applies.'),
         'rubricComment': (int,
         "The ID of a linked RubricComment. This field should be null if the comment isn't linked to any RubricComment."),
-        'author': (str, 'The user who created this Comment.')
+        'author': (str, 'The user who created this Comment.'),
+        'color': (str, 'The color in which this comment will render in the Code Console.'),
     }
     _FIELDS_READ_ONLY = []
     _FIELDS_REQUIRED = [

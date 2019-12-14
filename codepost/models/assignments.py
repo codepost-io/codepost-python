@@ -25,6 +25,8 @@ from . import abstract as _abstract
 
 #from . import courses as _courses
 from . import rubric_categories as _rubric_categories
+from . import file_templates as _file_templates
+from . import test_categories as _test_categories
 from . import submissions as _submissions
 
 # =============================================================================
@@ -46,18 +48,52 @@ class Assignments(
         "isReleased":       (bool, ("If True, finalized submissions will be viewable by students. " +
                                     "See Who can view a submission? for more details.")),
         "rubricCategories": (_typing.List[_rubric_categories.RubricCategories], "A list of RubricCategories, which constitute this assignment's rubric."),
+        "fileTemplates": (_typing.List[_file_templates.FileTemplates], "A list of FileTemplates belonging to this assignment."),
+        "testCategories": (_typing.List[_test_categories.TestCategories], "A list of Test Categories belonging to this assignment."),
         "sortKey":          (int, "Key that defines how Assignments are sorted within the codePost UI."),
-        "hideGrades":       (bool, ("An Assignment setting. " +
-                                    "If True, students won't be able to view their submission grades for " +
-                                    "this assignment.")),
-        "anonymousGrading": (bool, ("An Assignment setting. " +
-                                    "If True, Anonymous Grading Mode will be enabled for this assignment.")),
         "mean":             (int, ("The mean grade calculated over finalized submissions for this assignment. " +
                                    "null if no submissions have been finalized.")),
         "median":           (int, ("The median grade calculated over finalized submissions for this assignment. " +
                                    "null if no submissions have been finalized.")),
+        ###################################################################################################
+        # Settings
+        ###################################################################################################
+
+        # Upload settings
+        "allowStudentUpload": (bool, ("An Assignment setting. " +
+                                    "If True, students will be able to submit submissions directly to codePost.")),
+        "uploadDueDate": (str, ("A datetime representing the time at which students will no longer be able to submit submissions through codePost.")),
+        "liveFeedbackMode": (bool, ("An Assignment setting. " +
+                                    "If True, students will be able to view any uploaded submission (and all associated data).")),
+        "allowLateUploads": (bool, ("An Assignment setting. " +
+                                    "If True, students will be allowed to submit submissions to codePost after assignment.uploadDueDate has passed.")),
+
+        # Grading settings
+        "anonymousGrading": (bool, ("An Assignment setting. " +
+                                    "If True, Anonymous Grading Mode will be enabled for this assignment.")),
+        "additiveGrading": (bool, ("An Assignment setting. " +
+                                    "If True, submission grades will start at 0 instead of assignment.points.")),
+        "forcedRubricMode": (bool, ("An Assignment setting. " +
+                                    "If True, graders will be prevented from saving comments which do not link to rubric comments.")),
+        "collaborativeRubricMode": (bool, ("An Assignment setting. " +
+                                    "If True, graders will be allowed to edit the assignment's rubric.")),
+        "showFrequentlyUsedRubricComments": (bool, ("An Assignment setting. " +
+                                    "If True, frequently used rubric comments will be shown in a special category in the Code Console.")),
+
+        # Publishing settings
+        "allowRegradeRequests": (bool, ("An Assignment setting. " +
+                                    "If True, students will be able to request regrades from codePost.")),
+        "regradeDeadline": (str, ("A datetime representing the time at which students will no longer be able to submit regrade requests through codePost.")),
+        "hideGrades":       (bool, ("An Assignment setting. " +
+                                    "If True, students won't be able to view their submission grades for " +
+                                    "this assignment.")),
+        "hideGradersFromStudents": (bool, ("An Assignment setting. " +
+                                    "If True, grader emails won't be revleaed to students.")),
+        "commentFeedback": (bool, ("An Assignment setting. " +
+                                    "If True, students will be able to provide feedback on rubric comments.")),
+        ###################################################################################################
     }
-    _FIELDS_READ_ONLY = [ "rubricCategories", "mean", "median" ]
+    _FIELDS_READ_ONLY = [ "rubricCategories", "fileTemplates", "testCategories", "mean", "median", ]
     _FIELDS_REQUIRED = [ "name", "points", "course" ]
 
     def list_submissions(self, id=None, student=None, grader=None):

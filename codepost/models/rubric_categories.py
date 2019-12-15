@@ -1,7 +1,7 @@
 # =============================================================================
 # codePost v2.0 SDK
 #
-# COMMENT MODEL SUB-MODULE
+# RUBRIC CATEGORY MODEL SUB-MODULE
 # =============================================================================
 
 from __future__ import print_function # Python 2

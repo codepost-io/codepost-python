@@ -1,7 +1,7 @@
 # =============================================================================
 # codePost v2.0 SDK
 #
-# SUBMISSION MODEL SUB-MODULE
+# FILE TEMPLATE MODEL SUB-MODULE
 # =============================================================================
 
 from __future__ import print_function # Python 2

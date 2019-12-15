@@ -1,7 +1,7 @@
 # =============================================================================
 # codePost v2.0 SDK
 #
-# SUBMISSION MODEL SUB-MODULE
+# TEST CASE MODEL SUB-MODULE
 # =============================================================================
 
 from __future__ import print_function # Python 2
@@ -28,7 +28,7 @@ class TestCases(
     _OBJECT_NAME = "testCases"
     _FIELD_ID = "id"
     _FIELDS = {
-        'testCategory': (int, 'The assignment this submission corresponds to.'),
+        'testCategory': (int, 'The test category this Test Case corresponds to.'),
         'type': (str,"An enum describing the type of test defined in this Test Case. 'external' is used for Test Cases run somewhere other than codePost"),
         'description': (str,"A test description of the Test Case used as a title."),
         "sortKey": (int, "Key that defines how Test Cases are sorted within the codePost UI."),

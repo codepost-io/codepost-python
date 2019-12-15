@@ -1,7 +1,7 @@
 # =============================================================================
 # codePost v2.0 SDK
 #
-# COMMENT MODEL SUB-MODULE
+# RUBRIC CATEGORY MODEL SUB-MODULE
 # =============================================================================
 
 from __future__ import print_function # Python 2
@@ -41,7 +41,8 @@ class RubricCategories(
         'sortKey': (int,
         'The key which determines the order in which all rubric categories are presented in the codePost UI. Low keys are shown first.'),
         'helpText': (str,
-        'Text shown next to this rubric category to users in the Code Review Console. Use this space to provide additional instructions to graders.')
+        'Text shown next to this rubric category to users in the Code Review Console. Use this space to provide additional instructions to graders.'),
+        "atMostOnce": (bool, "A setting. If True, at most one comment linked to rubric comments from this category can be applied per submission from the Code Console."),
     }
     _FIELDS_READ_ONLY = [ "rubricComments" ]
     _FIELDS_REQUIRED = [ "name", "assignment" ]

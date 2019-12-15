@@ -37,7 +37,6 @@ class Courses(
         "timezone":                     (str, "A course setting. Must be a valid pytz timezone."),
         "emailNewUsers":                (bool, "A course setting. If True, users of any role added to this Course's roster will be sent a notification email."),
         "anonymousGradingDefault":      (bool, "A course setting. If True, newly created assignments will automatically be set to Anonymous Grading Mode."),
-        "allowGradersToEditRubric":     (bool, "A course setting. If True, graders and course admins will be able to edit an Assignment's directly rubric from the Code Review console."),
     }
     _FIELDS_READ_ONLY = [ ]
     _FIELDS_REQUIRED = [ "name", "period" ]

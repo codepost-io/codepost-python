@@ -40,7 +40,7 @@ class Files(
         'comments': (_typing.List[_comments.Comments], 'The IDs of all comments applied to this file.'),
         'path': (str, 'An optional file path to indicate a directory structure within a submission.')
     }
-    _FIELDS_READ_ONLY = [ "dateEdited", "grade", "comments" ]
+    _FIELDS_READ_ONLY = [ "comments", ]
     _FIELDS_REQUIRED = [ "name", "code", "extension", "submission" ]
 
 # =============================================================================

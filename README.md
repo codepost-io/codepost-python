@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/codepost-io/codePost-python.svg?branch=master)](https://travis-ci.com/codepost-io/codePost-python?branch=master)
 
 This package provides a Python library to conveniently access the codePost API
-from any application or script written in the Python language.
+from any application or script written in the Python language. To learn more, check out the [codePost website](https://codepost.io). 
 
 <!--
 

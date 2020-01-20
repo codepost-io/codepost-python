@@ -11,10 +11,10 @@ import logging as _logging
 import os as _os
 import time as _time
 import sys as _sys
+import platform as _platform
 
 # External imports
 import better_exceptions as _better_exceptions
-import blessings as _blessings
 import eliot
 import eliot.stdlib
 
@@ -87,6 +87,7 @@ class _SimpleColorFormatter(_logging.Formatter):
         Configure the formatter by initializing the colored terminal captions,
         for the log events which are output to standard output.
         """
+        import blessings as _blessings
         _t = _blessings.Terminal()
         f = lambda s: s.format(_t=_t) # Python 2 compatibility of f"..."
         self._title = {
@@ -157,8 +158,10 @@ def _setup_logging(name=None, level="INFO"):
         # Add the color handler to the terminal output
 
         handler = _logging.StreamHandler()#_QuietableStreamHandler()
-        formatter = _SimpleColorFormatter()
-        handler.setFormatter(formatter)
+
+        if _platform.system() != 'Windows':
+          formatter = _SimpleColorFormatter()
+          handler.setFormatter(formatter)
 
         # Set logging level of the terminal output (default to provided level)
 

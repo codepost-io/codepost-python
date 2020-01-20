@@ -90,7 +90,7 @@ class _SimpleColorFormatter(_logging.Formatter):
         _t = _blessings.Terminal()
         f = lambda s: s.format(_t=_t) # Python 2 compatibility of f"..."
         self._title = {
-            "DEBUG":   f("{_t.normal}[{_t.bold}{_t.blue}DBUG{_t.normal}]"),
+            "DEBUG":   f("{_t.normal}[{_t.bold}{_t.blue}DEBUG{_t.normal}]"),
             "INFO":    f("{_t.normal}[{_t.bold}{_t.green}INFO{_t.normal}]"),
             "WARNING": f("{_t.normal}[{_t.bold}{_t.yellow}WARN{_t.normal}]"),
             "ERROR":   f("{_t.normal}[{_t.bold}{_t.red}ERR.{_t.normal}]"),

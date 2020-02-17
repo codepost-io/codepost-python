@@ -11,6 +11,7 @@ import copy as _copy
 import functools as _functools
 import textwrap as _textwrap
 import typing as _typing
+import sys as _sys
 
 # External dependencies
 import better_exceptions as _better_exceptions
@@ -37,6 +38,35 @@ _LOG_SCOPE = "{}".format(__name__)
 
 # Global submodule protected attributes
 _logger = _logging.get_logger(name=_LOG_SCOPE)
+
+# =============================================================================
+
+def detect_list_type(typ):
+    """
+    Internal method to detect whether an abstract type is a List-type, and if so
+    returns the type of the list elements. Returns `None` otherwise.
+
+    :param field_type:  The abstract type to be analyzed.
+    :return: The type of the list elements, or `None`.
+    """
+
+    # Read more about this issue here:
+    # https://github.com/swagger-api/swagger-codegen/issues/8921
+
+    if _sys.version_info >= (3, 7):
+        if type(typ) is _typing._GenericAlias and typ._name == "List":
+            return typ.__args__[0]
+
+    elif _sys.version_info >= (3, 0):
+        try:
+            if (type(typ) is _typing.GenericMeta and
+                    (hasattr(typ, "__extra__") and typ.__extra__ is list)):
+                return typ.__args__[0]
+        except AttributeError:
+            pass
+
+        if hasattr(typ, "__origin__") and typ.__origin__ is _typing.List:
+            return typ.__args__[0]
 
 # =============================================================================
 
@@ -93,11 +123,13 @@ class APIResourceMetaclass(type):
         data = cls._data.__getitem__(field_name)
 
         if field_type is not None:
-            if (
-                type(field_type) is _typing._GenericAlias and
-                field_type._name == "List"
-            ):
-                list_type = field_type.__args__[0]
+
+            # Handle the case where the attribute of the model is a list
+            # of related instances.
+
+            list_type = detect_list_type(field_type)
+
+            if list_type is not None:
 
                 # OneToMany relations between objects
                 if issubclass(list_type, _api_resource.APIResource):

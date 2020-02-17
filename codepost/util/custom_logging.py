@@ -160,8 +160,8 @@ def _setup_logging(name=None, level="INFO"):
         handler = _logging.StreamHandler()#_QuietableStreamHandler()
 
         if _platform.system() != 'Windows':
-          formatter = _SimpleColorFormatter()
-          handler.setFormatter(formatter)
+            formatter = _SimpleColorFormatter()
+            handler.setFormatter(formatter)
 
         # Set logging level of the terminal output (default to provided level)
 

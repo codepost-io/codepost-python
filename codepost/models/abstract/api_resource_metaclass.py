@@ -219,6 +219,13 @@ class APIResourceMetaclass(type):
                 fields = { key: str for key in fields }
 
             if isinstance(fields, dict):
+                # The default format is (type, default_value).
+                # This code tries to expand 'type' -> (type, "")
+                # Since some of the type hints can be abstract, like typing.List[int], it has
+                # to use the GenericAlias/GenericMeta code
+                # see code in:
+                # https://github.com/codepost-io/codepost-python/commit/2b0ae00d160ddae0b6540b32bfb2778f428dccd7#diff-b7cc0946b625e77d99cb9a61818cd773R44-R71
+
                 # FIXME: Not sure what the line about _typing.GenericAlias was about
                 fields = {
                     key: (val, "") if (isinstance(val, type))# or

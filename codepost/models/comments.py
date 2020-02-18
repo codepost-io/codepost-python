@@ -30,6 +30,10 @@ class Comments(
     _OBJECT_NAME = "comments"
     _FIELD_ID = "id"
     _FIELDS = {
+        # NOTE: automate this
+        'created': (str, "Automatic timestamp for creation of database object."),
+        'modified': (str, "Automatic timestamp for modification of database object."),
+
         'text': (str,
         'The text of the comment. This text will be shown to both graders and students.'),
         'startChar': (int,

@@ -32,6 +32,10 @@ class Submissions(
     _OBJECT_NAME = "submissions"
     _FIELD_ID = "id"
     _FIELDS = {
+        # NOTE: automate this
+        'created': (str, "Automatic timestamp for creation of database object."),
+        'modified': (str, "Automatic timestamp for modification of database object."),
+
         'assignment': (int, 'The assignment this submission corresponds to.'),
         'students': (_typing.List[str],
         "A list of the students who worked on this submission. A student can have at most one submission per assignment. These users must also be active students in the submission's course. Every submission must have at least 1 student."),
@@ -43,6 +47,7 @@ class Submissions(
         'Index used to order the queue from which graders draw submissions. Low keys will be drawn from the queue first.'),
         'dateEdited': (str,
         "The time when this object was last edited. Edits include changes to the submission's fields and any updates or additions to child objects (such as a File or Comment)."),
+        'dateUploaded': (str, "The timestamp of when this submission was uploaded. This can be modified programmatically and is the basis for late day calculations."),
         'grade': (int,
         'Integer value specifying the number of points earned by the submission, accounting for all linked Comments and Rubric Comments. This field is calculated by the codePost API whenever the submission is finalized.'),
         'files': (_typing.List[_files.Files], "A list of the submission's Files."),

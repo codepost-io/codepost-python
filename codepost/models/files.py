@@ -30,8 +30,9 @@ class Files(
 ):
     _OBJECT_NAME = "files"
     _FIELD_ID = "id"
+
+    # NOTE: automate the "created" and "modified" attributes
     _FIELDS = {
-        # NOTE: automate this
         'created': (str, "Automatic timestamp for creation of database object."),
         'modified': (str, "Automatic timestamp for modification of database object."),
 

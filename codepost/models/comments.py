@@ -30,11 +30,9 @@ class Comments(
     _OBJECT_NAME = "comments"
     _FIELD_ID = "id"
 
-    # NOTE: automate the "created" and "modified" attributes
+    # FIXME: automate the "created" and "modified" attributes
+    # NOTE: when adding fields to this list make sure that the REQUIRED fields are first listed
     _FIELDS = {
-        'created': (str, "Automatic timestamp for creation of database object."),
-        'modified': (str, "Automatic timestamp for modification of database object."),
-
         'text': (str,
         'The text of the comment. This text will be shown to both graders and students.'),
         'startChar': (int,
@@ -52,6 +50,10 @@ class Comments(
         "The ID of a linked RubricComment. This field should be null if the comment isn't linked to any RubricComment."),
         'author': (str, 'The user who created this Comment.'),
         'color': (str, 'The color in which this comment will render in the Code Console.'),
+
+        'created': (str, "Automatic timestamp for creation of database object."),
+        'modified': (str, "Automatic timestamp for modification of database object."),
+
     }
     _FIELDS_READ_ONLY = []
     _FIELDS_REQUIRED = [

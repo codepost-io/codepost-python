@@ -31,11 +31,9 @@ class Files(
     _OBJECT_NAME = "files"
     _FIELD_ID = "id"
 
-    # NOTE: automate the "created" and "modified" attributes
+    # FIXME: automate the "created" and "modified" attributes
+    # NOTE: when adding fields to this list make sure that the REQUIRED fields are first listed
     _FIELDS = {
-        'created': (str, "Automatic timestamp for creation of database object."),
-        'modified': (str, "Automatic timestamp for modification of database object."),
-
         'name': (str, 'The name of the file.'),
         'code': (str,
         'The contents of the file. Accepts unicode-encoded strings, and will render newlines.'),
@@ -43,7 +41,10 @@ class Files(
         "The file extension. This field determines how the File's code will be syntax-highlighted."),
         'submission': (int, "The ID of the file's parent Submission."),
         'comments': (_typing.List[_comments.Comments], 'The IDs of all comments applied to this file.'),
-        'path': (str, 'An optional file path to indicate a directory structure within a submission.')
+        'path': (str, 'An optional file path to indicate a directory structure within a submission.'),
+
+        'created': (str, "Automatic timestamp for creation of database object."),
+        'modified': (str, "Automatic timestamp for modification of database object."),
     }
     _FIELDS_READ_ONLY = [ "comments", ]
     _FIELDS_REQUIRED = [ "name", "code", "extension", "submission" ]

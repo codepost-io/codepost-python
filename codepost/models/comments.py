@@ -50,6 +50,8 @@ class Comments(
         "The ID of a linked RubricComment. This field should be null if the comment isn't linked to any RubricComment."),
         'author': (str, 'The user who created this Comment.'),
         'color': (str, 'The color in which this comment will render in the Code Console.'),
+        'feedback': (int, "An integer representing the feedback applied to this comment. "
+                          "Currently only valid if rubricComment is not null, and among [-1, 0, 1]."),
 
         'created': (str, "Automatic timestamp for creation of database object."),
         'modified': (str, "Automatic timestamp for modification of database object."),

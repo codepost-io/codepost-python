@@ -25,6 +25,10 @@ class TestCases(
     _abstract.UpdatableAPIResource,
     _abstract.DeletableAPIResource,
 ):
+    # Avoid class being mistaken as a test by pytest
+    # (see: https://github.com/pytest-dev/pytest/issues/1879)
+    __test__ = False
+
     _OBJECT_NAME = "testCases"
     _FIELD_ID = "id"
     _FIELDS = {

@@ -9,6 +9,7 @@ from __future__ import print_function # Python 2
 # Python stdlib imports
 import inspect as _inspect
 import sys as _sys
+import typing as _typing
 
 # External dependencies
 try:
@@ -43,28 +44,32 @@ except ImportError: # pragma: no cover
 
 # =============================================================================
 
+
 def is_stringable(obj):
-    # type: str -> bool
+    # type: (_typing.Any) -> bool
     try:
         str(obj)
     except:
         return False
     return True
 
+
 def is_noarg_callable(obj):
-    # type: Any -> bool
+    # type: (_typing.Any) -> bool
     try:
         obj()
     except:
         return False
     return True
 
+
 def robust_str(obj, default="N/A"):
-    # type: Any -> str
+    # type: (_typing.Any, str) -> str
     obj_str = default
     if is_stringable(obj):
         obj_str = str(obj)
     return obj_str
+
 
 # =============================================================================
 
@@ -83,7 +88,8 @@ def is_field_set_in_kwargs(field, kwargs):
     # (Since signature is not coerced by forge, there are no spurious
     # fields in kwargs, and if we've made it this far, the field is in
     # the dict)
-    return True
+    return True # pragma: no cover
+
 
 # =============================================================================
 
@@ -97,6 +103,7 @@ class DocEnum(_Enum):
             super(DocEnum, self).__init__()
         self._value_ = value
         self.__doc__ = doc
+
 
 # =============================================================================
 
@@ -114,6 +121,7 @@ class MissingFormatKey(DocEnum):
                                     """
 
     REMOVE = "missing-keys-remove", "Missing format keys are removed."
+
 
 def _make_f(globals, locals):
 
@@ -180,29 +188,5 @@ def _make_f(globals, locals):
             #    pass
 
     return _f
-
-# =============================================================================
-
-def filter_kwargs_for_function(func, kwargs):
-
-    keys_from_func = set()
-    if _sys.version_info >= (3, 0):
-        # Python 3
-        sig = _inspect.signature(func)
-        keys_from_func = set(
-            param.name
-            for param in sig.parameters.values()
-            if param.kind == param.POSITIONAL_OR_KEYWORD
-        )
-    else: # pragma: no cover
-        # Python 2
-        keys_from_func = set(_inspect.getargspec(func).args)
-
-    keys_from_kwargs = set(kwargs.keys())
-    keys = keys_from_kwargs.intersection(keys_from_func)
-
-    filtered_kwargs = { key: kwargs[key] for key in keys }
-
-    return filtered_kwargs
 
 # =============================================================================

@@ -434,7 +434,7 @@ def configure_api_key(api_key=None, override=True, log_outcome=True):
                     "key name 'api-key' instead of 'api_key'."
                 )
 
-            return None
+            return
 
         _api_key = config.get("api_key")
 
@@ -458,7 +458,7 @@ def configure_api_key(api_key=None, override=True, log_outcome=True):
     
     _logging.current_action().finish(exception=RuntimeWarning("No API key"))
 
-    return None
+    return
 
 # =============================================================================
 

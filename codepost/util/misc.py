@@ -184,8 +184,6 @@ def _make_f(globals, locals):
                 )
             except ValueError:
                 raise
-            #except:
-            #    pass
 
     return _f
 

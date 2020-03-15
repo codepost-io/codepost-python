@@ -6,18 +6,6 @@ import pytest
 import codepost.util.misc as _misc
 
 
-class _StringableErr:
-    """
-    Class intended to fail when converted to string, or printed.
-    """
-
-    def __str__(self):
-        raise Exception("intended")
-
-    def __repr__(self):
-        raise Exception("intended")
-
-
 class TestIsStringable:
     """
     Tests for the `codepost.util.misc.is_stringable` method.
@@ -32,9 +20,8 @@ class TestIsStringable:
     def test_true_with_str_input(self):
         assert _misc.is_stringable(self.ANY_STRING)
 
-    def test_false(self):
-        bad_obj = _StringableErr()
-        assert not _misc.is_stringable(bad_obj)
+    def test_false(self, stringable_err):
+        assert not _misc.is_stringable(stringable_err)
 
 
 class TestIsNoargCallable:
@@ -77,15 +64,13 @@ class TestRobustStr:
             obj=self.ANY_STRING,
             default=self.DEFAULT_STRING) == self.ANY_STRING_STR
 
-    def test_false(self):
-        bad_obj = _StringableErr()
+    def test_false(self, stringable_err):
         assert _misc.robust_str(
-            obj=bad_obj,
+            obj=stringable_err,
             default=self.DEFAULT_STRING) == self.DEFAULT_STRING
 
-    def test_default(self):
-        bad_obj = _StringableErr()
-        assert _misc.robust_str(obj=bad_obj) == self.DEFAULT_STRING
+    def test_default(self, stringable_err):
+        assert _misc.robust_str(obj=stringable_err) == self.DEFAULT_STRING
 
 
 class TestIsFieldSetInKwargs:

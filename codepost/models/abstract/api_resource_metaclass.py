@@ -39,6 +39,7 @@ _LOG_SCOPE = "{}".format(__name__)
 # Global submodule protected attributes
 _logger = _logging.get_logger(name=_LOG_SCOPE)
 
+
 # =============================================================================
 
 def detect_list_type(typ):
@@ -68,7 +69,49 @@ def detect_list_type(typ):
         if hasattr(typ, "__origin__") and typ.__origin__ is _typing.List:
             return typ.__args__[0]
 
+
+def is_type_variable(typ):
+    """
+    Determines whether an object is a type variable.
+
+    :param typ:  The variable to be analyzed.
+    :return: `True` if variable is either an elementary type or an abstract type.
+    """
+
+    # All elementary types are simple
+    if type(typ) is type:
+        return True
+
+    # Now we must handle "abstract" types (i.e., List[int] for instance)
+
+    # NOTE: Since our framework only uses List[xxx] we can limit to this subcase
+    # for the moment (avoid unpredictability).
+    _only_allow_list_generic_objects = True
+
+    if _sys.version_info >= (3, 7):
+        return type(typ) is _typing._GenericAlias and (
+                not _only_allow_list_generic_objects or
+                typ._name == "List")
+
+    elif _sys.version_info >= (3, 0):
+        try:
+            return type(typ) is _typing.GenericMeta and (
+                not _only_allow_list_generic_objects or
+                (hasattr(typ, "__extra__") and typ.__extra__ is list)
+            )
+        except AttributeError:
+            pass
+
+        return hasattr(typ, "__origin__") and (
+            not _only_allow_list_generic_objects or
+            typ.__origin__ is _typing.List
+        )
+
+    # default case is that `typ` is probably not a type reference
+    return False
+
 # =============================================================================
+
 
 class APIResourceMetaclass(type):
     """
@@ -226,10 +269,12 @@ class APIResourceMetaclass(type):
                 # see code in:
                 # https://github.com/codepost-io/codepost-python/commit/2b0ae00d160ddae0b6540b32bfb2778f428dccd7#diff-b7cc0946b625e77d99cb9a61818cd773R44-R71
 
-                # FIXME: Not sure what the line about _typing.GenericAlias was about
+                # There are two possibilities:
+                # 1) (typ, default_value): a default value is provided -> use it
+                # 2) typ: no default value is provided -> use "" instead
+
                 fields = {
-                    key: (val, "") if (isinstance(val, type))# or
-                                    #isinstance(val, _typing._GenericAlias))
+                    key: (val, "") if is_type_variable(val)
                     else val
                     for (key, val) in fields.items()
                 }

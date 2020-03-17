@@ -79,6 +79,8 @@ class Assignments(
                                     "If True, graders will be allowed to edit the assignment's rubric.")),
         "showFrequentlyUsedRubricComments": (bool, ("An Assignment setting. " +
                                     "If True, frequently used rubric comments will be shown in a special category in the Code Console.")),
+        "templateMode": (bool, ("A boolean field. If True, admins will be able upload template code files. Those template files will be " +
+                                "used to de-emphasize provided versus student-written code in submissions.")),
 
         # Publishing settings
         "allowRegradeRequests": (bool, ("An Assignment setting. " +

@@ -1,43 +1,65 @@
-# codePost API Python Library
+# codePost API Python SDK
 
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/codepost-python/community)
 [![Build Status](https://travis-ci.com/codepost-io/codePost-python.svg?branch=master)](https://travis-ci.com/codepost-io/codePost-python?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/codepost-io/codepost-python/badge.svg?branch=master)](https://coveralls.io/github/codepost-io/codepost-python?branch=master)
 
 This package provides a Python library to conveniently access the codePost API
-from any application or script written in the Python language. To learn more, check out the [codePost website](https://codepost.io). 
+from any application or script written in the Python language.
 
-<!--
+You can learn more about [codePost](https://codepost.io), the best tool for educational code feedback, or
+check out the documentation for powerful, best-in-class [REST API](https://docs.codepost.io/reference) that
+this Python SDK allows you to control.
 
-[![Coverage Status](https://coveralls.io/repos/github/codepost-io/codePost-api-python/badge.svg?branch=master)](https://coveralls.io/github/codepost-io/codePost-api-python?branch=master)
+You can also dive in directly with the [codePost API Python SDK cheatsheet](https://docs.codepost.io/docs/python-sdk-cheatsheet).
 
-The package provides a set of helper functions used to access the codePost API from applications written in the Python language.
+# Quickstart
 
-## Documentation
+This section provides a quick overview of how to install the library and getting started, for more complete
+information, you can reference our [First Steps with the codePost API Python
+SDK](https://docs.codepost.io/docs/first-steps-with-the-codepost-python-sdk).
 
-This library implements helper methods to access the codePost API. Check out the [Python version of the codePost API docs](http://docs.codepost.io/?python#introduction).
 
-## Installation
+1. This codePost API Python SDK is available on the Python package manager PyPi, and can be installed from all
+usual sources, such as with `pip`:
+    ```shell
+    sudo pipenv install codepost
+    ```
+    You can also install the package just for your account (`pip install --user codepost`) or using a tool such
+    as `pipenv` which will install the library in a virtual environment (`pipenv install codepost`). 
+2. Once you've import the `codepost` package, you need to configure it with the API key you've obtained
+    from [your Settings page](https://codepost.io/settings) 
+    (for other means of setting the API key,
+    [read here](https://docs.codepost.io/docs/first-steps-with-the-codepost-python-sdk)):
+    ```python
+    import codepost
+    codepost.configure_api_key("ddafde24389de98434f8df3ee482389de98432afde24482f3428923491344f8df3eef34892349134")
+    ```
+3. You can then directly access the codePost objects:
+    ```python
+    course = codepost.course.list_available(name="CS101", period="Spring 2020")[0]
+    assignment = course.assignments.by_name("Hello World")
+    submissions = assignment.list_submissions()
+    for submission in submissions:
+        print("{student},{grade}", student="+".join(submission.students), grade=submission.grade)
+    ```
+    to print the grades of all submissions of the assignment `"Hello World"` of the course CS101 in Spring 2020.
 
-The recommended method to install this codePost API Python library, is to use pip:
+# Development
 
-```
-pip install codePost-api
-```
+The codePost API Python SDK is under active development. At this time, we are welcoming all
+issues, suggestions and feature requests. Please either [post a GitHub issue on this
+repository](https://github.com/codepost-io/codepost-python/issues), or [join our Gitter
+channel](https://gitter.im/codepost-python/community) to ask a question.
 
-or for local development:
 
-```
-pip install --user codePost-api
-```
+## Running tests
 
-## Usage
-
-To use the functions available in this library, you must have a codePost API key. As of March 2019, to retrieve a codePost API key, you must be a administrator of a course on codePost. It will then be accessible from [https://codepost.io/settings](https://codepost.io/settings).
-
-## Development
-
-To start developing, install [pipenv](https://github.com/pypa/pipenv), then install all dependencies for this project:
-
+To start developing, install [pipenv](https://github.com/pypa/pipenv), then install
+all dependencies (including development dependencies, with the flag `--dev`) for this project:
+    
+    git clone https://github.com/codepost-io/codepost-python
+    cd codepost-python
     pipenv install --dev
 
 Run all tests on all supported versions of Python which you have locally installed:
@@ -46,10 +68,8 @@ Run all tests on all supported versions of Python which you have locally install
 
 Run all tests for a specific Python version (modify `-e` according to your Python target):
 
-    pipenv run tox -e py27
+    pipenv run tox -e py37
 
 Run all tests in a single file for a specific Python version:
 
-    pipenv run tox -e py27 -- tests/test_helpers.py
-
--->
+    pipenv run tox -e py37 -- tests/util/test_misc.py

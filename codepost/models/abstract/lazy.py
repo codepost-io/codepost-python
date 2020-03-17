@@ -41,6 +41,8 @@ from . import api_resource as _api_resource
 
 _LAZY_REPR = "<Lazy[{cls.__name__}] loaded={_loaded}: {_inner}>"
 
+_LAZY_LOAD_ON_REPR = True
+
 # =============================================================================
 
 def create_lazy_resource(cls, id):
@@ -60,6 +62,23 @@ def create_lazy_resource(cls, id):
         # Actual internal object which is
         _inner = None
         _null = False
+
+        def _refresh(self):
+            """
+            Retrieve actual underlying object and cache.
+
+            :return: `True` if the object could be retrieved
+            """
+            try:
+                self._inner = cls().retrieve(id=id)
+            except _errors.NotFoundAPIError:
+                self._null = True
+            except _errors.AuthorizationAPIError:
+                # NOTE: Should this really silently fail? Maybe should
+                # at least log the event
+                self._null = True
+
+            return not self._null and self._inner is not None
 
         def __getattribute__(self, attr):
 
@@ -98,14 +117,7 @@ def create_lazy_resource(cls, id):
                 return id
             else:
                 # Fetch object and cache
-                try:
-                    self._inner = cls().retrieve(id=id)
-                except _errors.NotFoundAPIError:
-                    self._null = True
-                except _errors.AuthorizationAPIError:
-                    # NOTE: Should this really silently fail? Maybe should
-                    # at least log the event
-                    self._null = True
+                self._refresh()
 
                 # NOTE: Recall this method so the "fetched" case only has to
                 # be handled in one code branch.
@@ -128,6 +140,10 @@ def create_lazy_resource(cls, id):
         def __repr__(self):
 
             _loaded = (self._inner is not None)
+
+            if _LAZY_LOAD_ON_REPR and not _loaded:
+                _loaded = self._refresh()
+
             return _LAZY_REPR.format(
                 cls=cls,
                 _loaded=_loaded,

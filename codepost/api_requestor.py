@@ -119,7 +119,7 @@ class APIRequestor(object):
             if "name" in d:
                 s += d.get("name")
                 if "version" in d:
-                    s += "/v{version} ".format(**d)
+                    s += "/v{version}".format(**d)
                 if "url" in d:
                     s += " ({url})".format(**d)
         return s

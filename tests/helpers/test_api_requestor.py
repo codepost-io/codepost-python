@@ -75,3 +75,23 @@ class TestAPIRequestor:
         obj._request(endpoint="", method="POST", data=dict(), api_key=self.FAKE_API_KEY)
         obj._handle_request_error.assert_called()
 
+    # def test_use_right_api_key(self, mocker, requests_mock):
+    #     obj = _ar.APIRequestor()
+    #     adapter = requests_mock.adapter
+    #
+    #     def custom_matcher(request):
+    #         if (
+    #                 request.headers.get("Authorization", "") ==
+    #                 "Token {}".format(self.FAKE_API_KEY)
+    #         ):
+    #             return mocker.Mock(status_code=200)
+    #
+    #     adapter.add_matcher(custom_matcher)
+    #     obj._request(endpoint="", method="GET")
+    #
+    #     # requests_mock.get(
+    #     #     url=None,
+    #     #     request_headers={"Authorization": "Token {}".format(self.FAKE_API_KEY)},
+    #     #     status_code=200)
+    #     # obj._request(endpoint="", method="GET")
+    #     # assert requests_mock.called

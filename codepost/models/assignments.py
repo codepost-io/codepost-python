@@ -49,12 +49,20 @@ class Assignments(
                                     "See Who can view a submission? for more details.")),
         "rubricCategories": (_typing.List[_rubric_categories.RubricCategories], "A list of RubricCategories, which constitute this assignment's rubric."),
         "fileTemplates": (_typing.List[_file_templates.FileTemplates], "A list of FileTemplates belonging to this assignment."),
-        "testCategories": (_typing.List[_test_categories.TestCategories], "A list of Test Categories belonging to this assignment."),
         "sortKey":          (int, "Key that defines how Assignments are sorted within the codePost UI."),
         "mean":             (int, ("The mean grade calculated over finalized submissions for this assignment. " +
                                    "null if no submissions have been finalized.")),
         "median":           (int, ("The median grade calculated over finalized submissions for this assignment. " +
                                    "null if no submissions have been finalized.")),
+
+        ###################################################################################################
+        # Autograder
+        ###################################################################################################
+        "testCategories":   (_typing.List[_test_categories.TestCategories], "A list of Test Categories belonging to this assignment."),
+        "environment":      (int, ("The `Environment` object which this assignment is tied to, if the "
+                                   "autograder has been enabled for this assignment.")),
+
+
         ###################################################################################################
         # Settings
         ###################################################################################################

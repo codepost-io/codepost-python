@@ -14,9 +14,11 @@ import typing as _typing
 import sys as _sys
 
 # External dependencies
-import better_exceptions as _better_exceptions
+# import better_exceptions as _better_exceptions
 try:
-    import forge as _forge
+    # FIXME: URGENT LINE TO FIX
+    # (there is a problem with forge and .tests)
+    _forge = None #import forge as _forge
 except ImportError: # pragma: no cover
     _forge = None
 finally:

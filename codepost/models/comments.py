@@ -58,10 +58,14 @@ class Comments(
 
     }
     _FIELDS_READ_ONLY = []
+
+    # NOTE: smart defaults for position arguments added as part of
+    # https://github.com/codepost-io/codePost-api/pull/176
     _FIELDS_REQUIRED = [
+        "file",
         "text",
         "startChar", "endChar",
-        "startLine", "endLine"
+        "startLine",  "endLine"
     ]
 
 # =============================================================================

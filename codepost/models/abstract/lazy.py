@@ -30,7 +30,7 @@ except ImportError: # pragma: no cover
     from urllib import urlencode as urlencode
 
 # External dependencies
-import better_exceptions as _better_exceptions
+# import better_exceptions as _better_exceptions
 import requests as _requests
 
 # Local imports

@@ -38,6 +38,9 @@ class RubricComments(
         'The key which determines how rubric comments are sorted within a Rubric Category in the codePost UI. Low keys are shown first.'),
         'explanation': (str,
         'Text (markdown) that, when defined, will be shown in place of rubricComment.text to students from the Code Console.'),
+        'instructionText': (str, 'Text (markdown) that, when a grader applies this comment, will be shown in the customization bubble.'),
+        'templateTextOn': (bool, 'Flag that indicates whether the instruction should be used as a template.'),
+        'name': (str, 'Internal name, for instance to track occurrences of comments across assignments.'),
     }
     _FIELDS_READ_ONLY = [ "comments" ]
     _FIELDS_REQUIRED = [ "text", "pointDelta", "category" ]

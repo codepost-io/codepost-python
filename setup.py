@@ -31,7 +31,6 @@ setup(
     install_requires=[
         "requests",
         "PyYAML",
-        "better_exceptions",
         "blessings",
         "colorama",
         "eliot",

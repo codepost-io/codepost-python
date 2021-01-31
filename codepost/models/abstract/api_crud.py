@@ -7,7 +7,7 @@
 from __future__ import print_function # Python 2
 
 # External dependencies
-import better_exceptions as _better_exceptions
+# import better_exceptions as _better_exceptions
 
 # Local imports
 import codepost.errors as _errors

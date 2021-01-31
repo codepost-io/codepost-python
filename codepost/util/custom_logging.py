@@ -14,7 +14,7 @@ import sys as _sys
 import platform as _platform
 
 # External imports
-import better_exceptions as _better_exceptions
+# import better_exceptions as _better_exceptions
 import eliot
 import eliot.stdlib
 

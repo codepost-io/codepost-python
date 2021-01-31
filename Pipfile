@@ -17,7 +17,6 @@ pytest-mock = "*"
 requests-mock = "*"
 
 [packages]
-better-exceptions = "*"
 blessings = "*"
 colorama = "*"
 eliot = "*"

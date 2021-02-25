@@ -8,6 +8,14 @@ from __future__ import print_function # Python 2
 
 # Python stdlib imports
 import typing as _typing
+try:
+    # Python 3
+    from urllib.parse import urljoin as _urljoin
+    from urllib.parse import urlencode as _urlencode
+except ImportError: # pragma: no cover
+    # Python 2
+    from urlparse import urljoin as _urljoin
+    from urllib import urlencode as _urlencode
 
 # External dependencies
 import six as _six
@@ -57,5 +65,37 @@ class Submissions(
     }
     _FIELDS_READ_ONLY = [ "dateEdited", "grade", "files", 'tests' ]
     _FIELDS_REQUIRED = [ "assignment", "students" ]
+
+    def list_view_history(self, id=None, return_all=False):
+        """
+        Returns the list of view histories associated with the submission.
+        """
+        _class_type = type(self)
+
+        id = self._get_id(id=id)
+
+        endpoint = "/submissions/{}/history".format(id)
+        endpoint_params = {}
+
+        if len(endpoint_params) > 0:
+            endpoint += "?{}".format(_urlencode(endpoint_params))
+
+        ret = self._requestor._request(
+            endpoint=endpoint,
+            method="GET",
+        )
+        if ret.status_code == 200:
+            # Returns a list of all submission histories
+            lst = ret.json
+
+            # This list tends to only contain one history (bug!)
+            if return_all:
+                return lst
+
+            if len(lst) > 0:
+                # FIXME: sort to guarantee most recent view
+                return lst[0]
+
+        return dict()
 
 # =============================================================================

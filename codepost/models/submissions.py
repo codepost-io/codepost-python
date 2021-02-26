@@ -59,6 +59,7 @@ class Submissions(
         'Integer value specifying the number of points earned by the submission, accounting for all linked Comments and Rubric Comments. This field is calculated by the codePost API whenever the submission is finalized.'),
         'files': (_typing.List[_files.Files], "A list of the submission's Files."),
         'tests': (_typing.List[_submission_tests.SubmissionTests], "A list of the submission's Submission Tests."),
+        'testRunsCompleted': (int, 'Number of test runs completed for a student'),
 
         'created': (str, "Automatic timestamp for creation of database object."),
         'modified': (str, "Automatic timestamp for modification of database object."),

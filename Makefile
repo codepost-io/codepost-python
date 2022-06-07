@@ -22,8 +22,9 @@ ci:
 	pipenv run pytest --cov=codepost
 
 init:
-	pip install --upgrade pip~=18.0 pipenv==2018.10.13
+	#pip install --upgrade pip~=22.1.9 pipenv==2018.10.13
 	pipenv install --dev --skip-lock
+	pipenv run pip install -U pip
 
 coveralls:
 	pipenv run coveralls
@@ -82,8 +83,10 @@ check: install
 # 	@cd docs && sphinx-build -nb html -d build/doctrees . build/html
 
 publish: install
+	pipenv run python -m pip install --upgrade pip
 	git push origin && git push --tags origin
 	$(MAKE) clean
+	pip install --upgrade pip
 	pip install --quiet twine wheel
 	python setup.py sdist bdist_wheel
 	twine upload dist/*

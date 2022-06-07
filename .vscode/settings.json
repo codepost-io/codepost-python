@@ -18,5 +18,8 @@
   "python.linting.enabled": true,
   "python.autoComplete.extraPaths": [
     "./codepost"
+  ],
+  "python.analysis.extraPaths": [
+    "./codepost"
   ]
 }

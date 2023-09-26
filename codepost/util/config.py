@@ -71,7 +71,7 @@ from .misc import _make_f
 _LOG_SCOPE = "{}".format(__name__)
 
 SETTINGS_URL = "https://codepost.io/settings"
-BASE_URL = "https://api.codepost.io/"
+BASE_URL = "https://api.codepost.io"
 DEFAULT_API_KEY_ENV = "CP_API_KEY"
 DEFAULT_CONFIG_PATHS = [
     "codepost-config.yaml",

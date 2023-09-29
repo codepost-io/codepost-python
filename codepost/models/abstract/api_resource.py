@@ -289,8 +289,7 @@ class APIResource(AbstractAPIResource):
                 pass
 
             # CASE 2: The class end point has not formatting parameter
-            # NOTE: Trailing slash important (API bug)
-            return urljoin(self.class_endpoint, "{}/".format(_id))
+            return urljoin(self.class_endpoint, "{}".format(_id))
 
     @property
     def instance_endpoint(self):

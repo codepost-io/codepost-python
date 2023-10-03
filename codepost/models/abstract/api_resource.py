@@ -288,6 +288,15 @@ class APIResource(AbstractAPIResource):
             except IndexError: # means formatting didn't work
                 pass
 
+            # This is NOT the proper fix; I'm only making this change to get
+            # scripts working after the breaking change made to the API and to
+            # this code.  I have no idea if this is the only "weird" case or not
+            # but the API requires a trailing / when *updating* submissions.
+            # At least this change doesn't seem to affect the other REST actions
+            # (GET at least; didn't bother testing others)
+            if self.class_endpoint == "/submissions/":
+                return urljoin(self.class_endpoint, "{}/".format(_id))
+
             # CASE 2: The class end point has not formatting parameter
             return urljoin(self.class_endpoint, "{}".format(_id))
 

@@ -116,7 +116,7 @@ class Assignments(
 
         id = self._get_id(id=id)
 
-        endpoint = "{}submissions".format(self.instance_endpoint_by_id(id=id))
+        endpoint = "{}/submissions".format(self.instance_endpoint_by_id(id=id).rstrip('/'))
         endpoint_params = {}
 
         if student != None:
